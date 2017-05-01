@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #include "ComplexMissionItemTest.h"
 
@@ -30,7 +43,6 @@ void ComplexMissionItemTest::init(void)
     _rgComplexMissionItemSignals[azimuthChangedIndex] =                 SIGNAL(azimuthChanged(double));
     _rgComplexMissionItemSignals[commandDescriptionChangedIndex] =      SIGNAL(commandDescriptionChanged());
     _rgComplexMissionItemSignals[commandNameChangedIndex] =             SIGNAL(commandNameChanged());
-    _rgComplexMissionItemSignals[abbreviationChangedIndex] =            SIGNAL(abbreviationChanged());
     _rgComplexMissionItemSignals[coordinateChangedIndex] =              SIGNAL(coordinateChanged(const QGeoCoordinate&));
     _rgComplexMissionItemSignals[exitCoordinateChangedIndex] =          SIGNAL(exitCoordinateChanged(const QGeoCoordinate&));
     _rgComplexMissionItemSignals[dirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
@@ -45,7 +57,7 @@ void ComplexMissionItemTest::init(void)
     _rgComplexMissionItemSignals[exitCoordinateHasRelativeAltitudeChangedIndex] =   SIGNAL(exitCoordinateHasRelativeAltitudeChanged(bool));
     _rgComplexMissionItemSignals[exitCoordinateSameAsEntryChangedIndex] =           SIGNAL(exitCoordinateSameAsEntryChanged(bool));
 
-    _complexItem = new SurveyMissionItem(NULL /* Vehicle */, this);
+    _complexItem = new ComplexMissionItem(NULL /* Vehicle */, this);
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -138,13 +150,29 @@ void ComplexMissionItemTest::_testAddPolygonCoordinate(void)
         QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
     }
 
-    // Test that number of waypoints is doubled when using turnaround waypoints
-    _complexItem->setTurnaroundDist(60.0);
-    QVariantList gridPoints = _complexItem->gridPoints();
-    _complexItem->setTurnaroundDist(0.0);
-    QVariantList gridPointsNoT = _complexItem->gridPoints();
-    QCOMPARE(gridPoints.count(), 2 * gridPointsNoT.count());
+    _complexItem->setDirty(false);
+    _multiSpy->clearAllSignals();
 
+    // Forth call to addPolygonCoordinate should trigger:
+    //      polygonPathChanged
+    //      dirtyChanged
+    // Grid is generated again on polygon change which triggers:
+    //      lastSequenceNumberChanged -  number of internal mission items changes
+    //      gridPointsChanged - grid points show up for the first time
+    //      exitCoordinateChanged - grid generates new exit coordinate
+    // Note: Given the data set the entry coordinate stays the same
+
+    _complexItem->addPolygonCoordinate(_polyPoints[3]);
+    QVERIFY(_multiSpy->checkOnlySignalByMask(polygonPathChangedMask | lastSequenceNumberChangedMask | gridPointsChangedMask | exitCoordinateChangedMask |
+                                             dirtyChangedMask));
+    seqNum = _multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex);
+    QVERIFY(seqNum > 0);
+
+    polyList = _complexItem->polygonPath();
+    QCOMPARE(polyList.count(), 4);
+    for (int i=0; i<polyList.count(); i++) {
+        QCOMPARE(polyList[i].value<QGeoCoordinate>(), _polyPoints[i]);
+    }
 }
 
 void ComplexMissionItemTest::_testClearPolygon(void)
@@ -178,7 +206,7 @@ void ComplexMissionItemTest::_testClearPolygon(void)
 
 void ComplexMissionItemTest::_testCameraTrigger(void)
 {
-    QCOMPARE(_complexItem->property("cameraTrigger").toBool(), true);
+    QVERIFY(!_complexItem->property("cameraTrigger").toBool());
 
     // Turning on/off camera triggering while there is no grid should trigger:
     //      cameraTriggerChanged
@@ -186,18 +214,17 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
     // lastSequenceNumber should not change
 
     int lastSeq = _complexItem->lastSequenceNumber();
-
-    _complexItem->setProperty("cameraTrigger", false);
+    _complexItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
+    QVERIFY(_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
     QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
 
     _complexItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    _complexItem->setProperty("cameraTrigger", true);
+    _complexItem->setProperty("cameraTrigger", false);
     QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask | cameraTriggerChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
+    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(cameraTriggerChangedIndex));
     QCOMPARE(_complexItem->lastSequenceNumber(), lastSeq);
 
     // Set up a grid
@@ -212,20 +239,20 @@ void ComplexMissionItemTest::_testCameraTrigger(void)
     lastSeq = _complexItem->lastSequenceNumber();
     QVERIFY(lastSeq > 0);
 
-    // Turning off camera triggering should remove two camera trigger mission items, this should trigger:
+    // Turning on camera triggering should add two more mission items, this should trigger:
     //      lastSequenceNumberChanged
     //      dirtyChanged
 
-    _complexItem->setProperty("cameraTrigger", false);
+    _complexItem->setProperty("cameraTrigger", true);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq - 2);
+    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq + 2);
 
     _complexItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
-    // Turn on camera triggering and make sure things go back to previous count
+    // Turn off camera triggering and make sure things go back to previous count
 
-    _complexItem->setProperty("cameraTrigger", true);
+    _complexItem->setProperty("cameraTrigger", false);
     QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
     QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
 }

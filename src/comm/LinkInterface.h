@@ -1,11 +1,33 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
+
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+
+(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+
+This file is part of the PIXHAWK project
+
+PIXHAWK is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+PIXHAWK is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+* @file
+*   @brief Brief Description
+*
+*   @author Lorenz Meier <mavteam@student.ethz.ch>
+*
+*/
 
 #ifndef _LINKINTERFACE_H_
 #define _LINKINTERFACE_H_
@@ -16,7 +38,6 @@
 #include <QMutexLocker>
 #include <QMetaType>
 #include <QSharedPointer>
-#include <QDebug>
 
 #include "QGCMAVLink.h"
 
@@ -43,10 +64,10 @@ public:
     void setActive(bool active)             { _active = active; emit activeChanged(active); }
 
     /**
-     * @brief Get link configuration
-     * @return A pointer to the instance of LinkConfiguration
+     * @brief Get link configuration (if used)
+     * @return A pointer to the instance of LinkConfiguration if supported. NULL otherwise.
      **/
-    virtual LinkConfiguration* getLinkConfiguration() = 0;
+    virtual LinkConfiguration* getLinkConfiguration() { return NULL; }
 
     /* Connection management */
 
@@ -116,13 +137,7 @@ public:
     
     /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
     /// set into the link when it is added to LinkManager
-    uint8_t mavlinkChannel(void) const
-    {
-        if (!_mavlinkChannelSet) {
-            qWarning() << "Call to LinkInterface::mavlinkChannel with _mavlinkChannelSet == false";
-        }
-        return _mavlinkChannel;
-    }
+    uint8_t getMavlinkChannel(void) const { Q_ASSERT(_mavlinkChannelSet); return _mavlinkChannel; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
@@ -136,27 +151,16 @@ public slots:
      *
      * If the underlying communication is packet oriented,
      * one write command equals a datagram. In case of serial
-     * communication arbitrary byte lengths can be written. The method ensures
-     * thread safety regardless of the underlying LinkInterface implementation.
+     * communication arbitrary byte lengths can be written
      *
      * @param bytes The pointer to the byte array containing the data
      * @param length The length of the data array
      **/
-    void writeBytesSafe(const char *bytes, int length)
-    {
-        emit _invokeWriteBytes(QByteArray(bytes, length));
-    }
-
-private slots:
-    virtual void _writeBytes(const QByteArray) = 0;
+    virtual void writeBytes(const char *bytes, qint64 length) = 0;
     
 signals:
     void autoconnectChanged(bool autoconnect);
     void activeChanged(bool active);
-    void _invokeWriteBytes(QByteArray);
-
-    /// Signalled when a link suddenly goes away due to it being removed by for example pulling the cable to the connection.
-    void connectionRemoved(LinkInterface* link);
 
     /**
      * @brief New data arrived
@@ -185,7 +189,7 @@ signals:
      */
     void nameChanged(QString name);
 
-    /** @brief Communication error occurred */
+    /** @brief Communication error occured */
     void communicationError(const QString& title, const QString& error);
 
     void communicationUpdate(const QString& linkname, const QString& text);
@@ -208,14 +212,13 @@ protected:
         memset(_outDataWriteAmounts,0, sizeof(_outDataWriteAmounts));
         memset(_outDataWriteTimes,  0, sizeof(_outDataWriteTimes));
         
-        QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
         qRegisterMetaType<LinkInterface*>("LinkInterface*");
     }
 
     /// This function logs the send times and amounts of datas for input. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes received
-    ///     @param time Time in ms send occurred
+    ///     @param time Time in ms send occured
     void _logInputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_inDataWriteAmounts, _inDataWriteTimes, &_inDataIndex, byteCount, time);
@@ -224,12 +227,22 @@ protected:
     /// This function logs the send times and amounts of datas for output. Data is used for calculating
     /// the transmission rate.
     ///     @param byteCount Number of bytes sent
-    ///     @param time Time in ms receive occurred
+    ///     @param time Time in ms receive occured
     void _logOutputDataRate(quint64 byteCount, qint64 time) {
         if(_enableRateCollection)
             _logDataRateToBuffer(_outDataWriteAmounts, _outDataWriteTimes, &_outDataIndex, byteCount, time);
     }
     
+protected slots:
+
+    /**
+     * @brief Read a number of bytes from the interface.
+     *
+     * @param bytes The pointer to write the bytes to
+     * @param maxLength The maximum length which can be written
+     **/
+    virtual void readBytes() = 0;
+
 private:
     /**
      * @brief logDataRateToBuffer Stores transmission times/amounts for statistics

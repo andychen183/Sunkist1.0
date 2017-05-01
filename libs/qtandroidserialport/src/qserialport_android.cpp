@@ -46,9 +46,9 @@
 #include <QtAndroidExtras/QtAndroidExtras>
 #include <QtAndroidExtras/QAndroidJniObject>
 
-#include "qserialport_android_p.h"
+#include <android/log.h>
 
-QGC_LOGGING_CATEGORY(AndroidSerialPortLog, "AndroidSerialPortLog")
+#include "qserialport_android_p.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -91,30 +91,6 @@ static void jniDeviceException(JNIEnv *envA, jobject thizA, jint userDataA, jstr
     }
 }
 
-static void jniLogDebug(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char *stringL = envA->GetStringUTFChars(messageA, NULL);
-    QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    if (envA->ExceptionCheck())
-        envA->ExceptionClear();
-    qCDebug(AndroidSerialPortLog) << logMessage;
-}
-
-static void jniLogWarning(JNIEnv *envA, jobject thizA, jstring messageA)
-{
-    Q_UNUSED(thizA);
-
-    const char *stringL = envA->GetStringUTFChars(messageA, NULL);
-    QString logMessage = QString::fromUtf8(stringL);
-    envA->ReleaseStringUTFChars(messageA, stringL);
-    if (envA->ExceptionCheck())
-        envA->ExceptionClear();
-    qWarning() << logMessage;
-}
-
 void cleanJavaException()
 {
     QAndroidJniEnvironment env;
@@ -140,15 +116,13 @@ QSerialPortPrivate::QSerialPortPrivate(QSerialPort *q)
 
 void QSerialPortPrivate::setNativeMethods(void)
 {
-    qCDebug(AndroidSerialPortLog) << "Registering Native Functions";
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Registering Native Functions");
 
     //  REGISTER THE C++ FUNCTION WITH JNI
     JNINativeMethod javaMethods[] {
-        {"nativeDeviceHasDisconnected", "(I)V",                     reinterpret_cast<void *>(jniDeviceHasDisconnected)},
-        {"nativeDeviceNewData",         "(I[B)V",                   reinterpret_cast<void *>(jniDeviceNewData)},
-        {"nativeDeviceException",       "(ILjava/lang/String;)V",   reinterpret_cast<void *>(jniDeviceException)},
-        {"qgcLogDebug",                 "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogDebug)},
-        {"qgcLogWarning",               "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogWarning)}
+        {"nativeDeviceHasDisconnected", "(I)V",                   reinterpret_cast<void *>(jniDeviceHasDisconnected)},
+        {"nativeDeviceNewData",         "(I[B)V",                 reinterpret_cast<void *>(jniDeviceNewData)},
+        {"nativeDeviceException",       "(ILjava/lang/String;)V", reinterpret_cast<void *>(jniDeviceException)}
     };
 
     QAndroidJniEnvironment jniEnv;
@@ -159,36 +133,36 @@ void QSerialPortPrivate::setNativeMethods(void)
 
     jclass objectClass = jniEnv->FindClass(kJniClassName);
     if(!objectClass) {
-        qWarning() << "Couldn't find class:" << kJniClassName;
+        __android_log_print(ANDROID_LOG_ERROR, kJTag, "Couldn't find class: %s", kJniClassName);
         return;
     }
 
     jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
 
-    if (val < 0) {
-        qWarning() << "Error registering methods: " << val;
-    } else {
-        qCDebug(AndroidSerialPortLog) << "Native Functions Registered";
-    }
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Native Functions Registered");
 
     if (jniEnv->ExceptionCheck()) {
         jniEnv->ExceptionDescribe();
         jniEnv->ExceptionClear();
+    }
+
+    if (val < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, kJTag, "Error registering methods");
     }
 }
 
 bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
 {
     rwMode = mode;
-    qCDebug(AndroidSerialPortLog) << "Opening" << systemLocation.toLatin1().data();
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Opening %s", systemLocation.toLatin1().data());
 
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Calling Java Open");
     QAndroidJniObject jnameL = QAndroidJniObject::fromString(systemLocation);
     cleanJavaException();
     deviceId = QAndroidJniObject::callStaticMethod<jint>(
         kJniClassName,
         "open",
-        "(Landroid/content/Context;Ljava/lang/String;I)I",
-        QtAndroid::androidActivity().object(),
+        "(Ljava/lang/String;I)I",
         jnameL.object<jstring>(),
         (jint)this);
     cleanJavaException();
@@ -197,10 +171,19 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
 
     if (deviceId == BAD_PORT)
     {
-        qWarning() << "Error opening %s" << systemLocation.toLatin1().data();
+        __android_log_print(ANDROID_LOG_ERROR, kJTag, "Error opening %s", systemLocation.toLatin1().data());
         q_ptr->setError(QSerialPort::DeviceNotFoundError);
         return false;
     }
+
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Calling Java getDeviceHandle");
+    cleanJavaException();
+    descriptor = QAndroidJniObject::callStaticMethod<jint>(
+        kJniClassName,
+        "getDeviceHandle",
+        "(I)I",
+        deviceId);
+    cleanJavaException();
 
     if (rwMode == QIODevice::WriteOnly)
         stopReadThread();
@@ -213,7 +196,7 @@ void QSerialPortPrivate::close()
     if (deviceId == BAD_PORT)
         return;
 
-    qCDebug(AndroidSerialPortLog) << "Closing" << systemLocation.toLatin1().data();
+    __android_log_print(ANDROID_LOG_INFO, kJTag, "Closing %s", systemLocation.toLatin1().data());
     cleanJavaException();
     jboolean resultL = QAndroidJniObject::callStaticMethod<jboolean>(
         kJniClassName,

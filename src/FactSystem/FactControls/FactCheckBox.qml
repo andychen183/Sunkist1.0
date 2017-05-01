@@ -11,10 +11,12 @@ QGCCheckBox {
     property variant checkedValue: 1
     property variant uncheckedValue: 0
 
-    partiallyCheckedEnabled: fact ? fact.value !== checkedValue && fact.value !== uncheckedValue : false
-    checkedState: fact ? fact.value === checkedValue ? Qt.Checked : (fact.value === uncheckedValue ? Qt.Unchecked : Qt.PartiallyChecked) : false
+    property var __qgcpal: QGCPalette { colorGroupEnabled: true }
 
-    text: qsTr("Label")
+    partiallyCheckedEnabled: fact.value != checkedValue && fact.value != uncheckedValue
+    checkedState: fact.value == checkedValue ? Qt.Checked : (fact.value == uncheckedValue ? Qt.Unchecked : Qt.PartiallyChecked)
+
+    text: "Label"
 
     onClicked: {
         fact.value = checked ? checkedValue : uncheckedValue

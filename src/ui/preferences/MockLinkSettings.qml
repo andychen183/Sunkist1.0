@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.4
@@ -24,14 +37,9 @@ Item {
 
     function saveSettings() {
         if(px4Firmware.checked)
-            subEditConfig.firmware = 12         // Hardcoded MAV_AUTOPILOT_PX4
-        else if(apmFirmware.checked) {
+            subEditConfig.firmware = 12
+        else if(apmFirmware.checked)
             subEditConfig.firmware = 3
-            if(planeVehicle.checked)
-                subEditConfig.vehicle = 1       // Hardcoded MAV_TYPE_FIXED_WING
-            else
-                subEditConfig.vehicle = 2       // Hardcoded MAV_TYPE_QUADROTOR
-        }
         else
             subEditConfig.firmware = 0
         subEditConfig.sendStatus = sendStatus.checked
@@ -56,7 +64,7 @@ Item {
         width:      mockLinkSettings.width
         spacing:    ScreenTools.defaultFontPixelHeight / 2
         QGCLabel {
-            text:   qsTr("Mock Link Settings")
+            text:   "Mock Link Settings"
         }
         Item {
             height: ScreenTools.defaultFontPixelHeight / 2
@@ -64,7 +72,7 @@ Item {
         }
         QGCCheckBox {
             id:         sendStatus
-            text:       qsTr("Send Status Text and Voice")
+            text:       "Send Status Text and Voice"
             checked:    false
         }
         Item {
@@ -75,19 +83,19 @@ Item {
             ExclusiveGroup { id: autoPilotGroup }
             QGCRadioButton {
                 id:         px4Firmware
-                text:       qsTr("PX4 Firmware")
+                text:       "PX4 Firmware"
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
             QGCRadioButton {
                 id:         apmFirmware
-                text:       qsTr("APM Firmware")
+                text:       "APM Firmware"
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
             QGCRadioButton {
                 id:         genericFirmware
-                text:       qsTr("Generic Firmware")
+                text:       "Generic Firmware"
                 checked:    false
                 exclusiveGroup: autoPilotGroup
             }
@@ -97,7 +105,7 @@ Item {
             width:  parent.width
         }
         QGCLabel {
-            text:       qsTr("APM Vehicle Type")
+            text:       "APM Vehicle Type"
             visible:    apmFirmware.checked
         }
         ColumnLayout {
@@ -105,13 +113,13 @@ Item {
             ExclusiveGroup { id: apmVehicleGroup }
             QGCRadioButton {
                 id:     copterVehicle
-                text:   qsTr("ArduCopter")
+                text:   "ArduCopter"
                 checked:    false
                 exclusiveGroup: apmVehicleGroup
             }
             QGCRadioButton {
                 id:     planeVehicle
-                text:   qsTr("ArduPlane")
+                text:   "ArduPlane"
                 checked:    false
                 exclusiveGroup: apmVehicleGroup
             }

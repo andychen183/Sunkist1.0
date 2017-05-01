@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -86,7 +99,6 @@ public:
     void                        setMaxMemCache      (quint32 size);
     const QString               getCachePath        () { return _cachePath; }
     const QString               getCacheFilename    () { return _cacheFile; }
-    bool                        wasCacheReset       () { return _cacheWasReset; }
 
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 
@@ -97,7 +109,7 @@ public:
     static QString              getTileHash         (UrlFactory::MapType type, int x, int y, int z);
     static UrlFactory::MapType  getTypeFromName     (const QString &name);
     static QString              bigSizeToString     (quint64 size);
-    static QString              numberToString      (quint64 number);
+    static QString              numberToString      (quint32 number);
     static int                  concurrentDownloads (UrlFactory::MapType type);
 
 private slots:
@@ -106,11 +118,6 @@ private slots:
 
 signals:
     void updateTotals           (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);
-
-private:
-    void _wipeOldCaches         ();
-    void _checkWipeDirectory    (const QString& dirPath);
-    bool _wipeDirectory         (const QString& dirPath);
 
 private:
     QGCCacheWorker          _worker;
@@ -122,7 +129,6 @@ private:
     quint32                 _maxDiskCache;
     quint32                 _maxMemCache;
     bool                    _prunning;
-    bool                    _cacheWasReset;
 };
 
 extern QGCMapEngine*    getQGCMapEngine();

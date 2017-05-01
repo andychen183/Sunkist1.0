@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.4
@@ -27,7 +40,7 @@ Item {
     }
 
     QGCLabel {
-        text:       qsTr("Bluetooth Not Available")
+        text:       "Bluetooth Not Available"
         visible:    !QGroundControl.linkManager.isBluetoothAvailable
         anchors.centerIn: parent
     }
@@ -46,7 +59,7 @@ Item {
 
         QGCLabel {
             id:     btLabel
-            text:   qsTr("Bluetooth Link Settings")
+            text:   "Bluetooth Link Settings"
         }
         Rectangle {
             height: 1
@@ -60,7 +73,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   qsTr("Device:")
+                text:   "Device:"
                 width:  _firstColumn
             }
             QGCLabel {
@@ -72,7 +85,7 @@ Item {
             visible:    !ScreenTools.isiOS
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   qsTr("Address:")
+                text:   "Address:"
                 width:  _firstColumn
             }
             QGCLabel {
@@ -85,7 +98,7 @@ Item {
             width:  parent.width
         }
         QGCLabel {
-            text:   qsTr("Bluetooth Devices:")
+            text:   "Bluetooth Devices:"
         }
         Item {
             width:  hostRow.width
@@ -139,7 +152,7 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
-                                text:       qsTr("Scan")
+                                text:       "Scan"
                                 enabled:    subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && !subEditConfig.scanning
                                 onClicked: {
                                     if(subEditConfig)
@@ -148,7 +161,7 @@ Item {
                             }
                             QGCButton {
                                 width:      ScreenTools.defaultFontPixelWidth * 10
-                                text:       qsTr("Stop")
+                                text:       "Stop"
                                 enabled:    subEditConfig && subEditConfig.linkType === LinkConfiguration.TypeBluetooth && subEditConfig.scanning
                                 onClicked: {
                                     if(subEditConfig)

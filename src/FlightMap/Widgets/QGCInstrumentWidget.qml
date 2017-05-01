@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -22,6 +35,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.Vehicle       1.0
 
 Item {
     id:     instrumentPanel
@@ -31,8 +45,8 @@ Item {
     property alias  heading:        compass.heading
     property alias  rollAngle:      attitudeWidget.rollAngle
     property alias  pitchAngle:     attitudeWidget.pitchAngle
-    property real   size:           _defaultSize
-    property bool   lightBorders:   true
+    property real   size:           800//_defaultSize
+    property bool   isSatellite:    false
     property bool   active:         false
     property var    qgcView
     property real   maxHeight
@@ -41,17 +55,15 @@ Item {
     property Fact   groundSpeedFact:    _emptyFact
     property Fact   airSpeedFact:       _emptyFact
 
-    property real   _defaultSize:   ScreenTools.defaultFontPixelHeight * (9)
+    property real   _defaultSize:   ScreenTools.defaultFontPixelSize * (9)
 
-    property color  _backgroundColor:   qgcPal.window
-    property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
+    property color  _backgroundColor:   isSatellite ? Qt.rgba(1,1,1,0.75) : Qt.rgba(0,0,0,0.75)
+    property real   _spacing:           ScreenTools.defaultFontPixelSize * 0.33
     property real   _topBottomMargin:   (size * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (attitudeWidget.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showCompass ? compass.height : 0)
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
-    readonly property bool _showCompass:    true // !ScreenTools.isShortScreen
-
-    QGCPalette { id: qgcPal }
+    readonly property bool _showCompass:    !ScreenTools.isShortScreen
 
 //    Rectangle {
 //        anchors.left:   parent.left
@@ -59,20 +71,90 @@ Item {
 //        height:         (_showCompass ? instrumentColumn.height : attitudeWidget.height) + (_topBottomMargin * 2)
 //        radius:         size / 2
 //        color:          _backgroundColor
-//        border.width:   1
-//        border.color:   lightBorders ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 //    }
 
+
+// click and show the value widget setup
 //    MouseArea {
 //        anchors.fill: parent
 //        onClicked: _valuesWidget.showPicker()
 //    }
 
+    QGCCompassWidget {
+        id:                 compass
+        size:               parent.width * 1
+        active:             instrumentPanel.active
+        visible:            true//_showCompass
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+//        y: 125
+//        anchors.bottom:     parent.bottom
+//        anchors.bottomMargin: 1
+        //anchors.centerIn: parent.Center
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    Column{
+        id: col_Readings
+        width:  parent.width
+        height: _valuesWidget.height
+        x: 250
+        y: -120
+
+        Item {
+            width:  parent.width
+            height: _valuesWidget.height
+            anchors.centerIn: col_Readings.Center
+
+//            Rectangle {
+//                anchors.fill:   _valuesWidget
+//                //style: Text.Outline; styleColor: "Black"
+//                color:          "white"
+//                visible:        true//!_showCompass && _activeVehicle
+//                radius:         _spacing
+//            }
+
+//            InstrumentSwipeView {
+//                id:                 _valuesWidget
+//                width:              parent.width
+//                qgcView:            instrumentPanel.qgcView
+//                textColor:          "white" //isSatellite ? "black" : "white"
+//                //backgroundColor:    _backgroundColor
+//                backgroundColor: "transparent"
+//                maxHeight:          600//_availableValueHeight
+//            }
+        }
+
+    }
+
+//    Item {
+//        width:  parent.width
+//        height: _valuesWidget.height
+//        x: -100
+//        y: -50
+
+//        Rectangle {
+//            anchors.fill:   _valuesWidget
+//            color:          _backgroundColor
+//            visible:        true//!_showCompass && _activeVehicle
+//            radius:         _spacing
+//        }
+
+//        InstrumentSwipeView {
+//            id:                 _valuesWidget
+//            width:              parent.width
+//            qgcView:            instrumentPanel.qgcView
+//            textColor:          isSatellite ? "black" : "white"
+//            backgroundColor:    _backgroundColor
+//            maxHeight:          600//_availableValueHeight
+//        }
+//    }
 
     Column {
         id:                 instrumentColumn
-        anchors.topMargin:  _topBottomMargin
-        anchors.top:        parent.top
+        anchors.topMargin:  0//_topBottomMargin
+        y: -100
+        //anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
         spacing:            _spacing
@@ -92,12 +174,13 @@ Item {
 //                id:                 gearThingy
 //                anchors.bottom:     attitudeWidget.bottom
 //                anchors.right:      attitudeWidget.right
-//                source:             qgcPal.globalTheme == QGCPalette.Light ? "/res/gear-black.svg" : "/res/gear-white.svg"
+//                source:             "/res/gear.svg"
 //                mipmap:             true
 //                opacity:            0.5
 //                width:              attitudeWidget.width * 0.15
-//                sourceSize.width:   width
 //                fillMode:           Image.PreserveAspectFit
+//                visible:            QGroundControl.multiVehicleManager.activeVehicle
+
 //                MouseArea {
 //                    anchors.fill:   parent
 //                    hoverEnabled:   true
@@ -112,24 +195,9 @@ Item {
 //            id:                 _spacer1
 //            height:             1
 //            width:              parent.width * 0.9
-//            color:              qgcPal.text
+//            color:              isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
 //            anchors.horizontalCenter: parent.horizontalCenter
 //        }
-
-        QGCCompassWidget {
-            id:                 compass
-            size:               parent.width * 1
-            active:             instrumentPanel.active
-            visible:            true//_showCompass
-
-            anchors.left:       parent.left
-            anchors.right:      parent.right
-    //        y: 125
-    //        anchors.bottom:     parent.bottom
-    //        anchors.bottomMargin: 1
-            //anchors.centerIn: parent.Center
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
 
 //        Item {
 //            width:  parent.width
@@ -138,37 +206,39 @@ Item {
 //            Rectangle {
 //                anchors.fill:   _valuesWidget
 //                color:          _backgroundColor
-//                visible:        !_showCompass
+//                visible:        true//!_showCompass && _activeVehicle
 //                radius:         _spacing
 //            }
 
 //            InstrumentSwipeView {
 //                id:                 _valuesWidget
-//                anchors.margins:    1
-//                anchors.left:       parent.left
-//                anchors.right:      parent.right
+//                width:              parent.width
 //                qgcView:            instrumentPanel.qgcView
-//                textColor:          qgcPal.text
+//                textColor:          isSatellite ? "black" : "white"
 //                backgroundColor:    _backgroundColor
-//                maxHeight:          _availableValueHeight
+//                maxHeight:          600//_availableValueHeight
 //            }
 //        }
 
-//        Rectangle {
-//            id:                 _spacer2
-//            height:             1
-//            width:              parent.width * 0.9
-//            color:              qgcPal.text
-//            visible:            _showCompass
-//            anchors.horizontalCenter: parent.horizontalCenter
-//        }
+
+        Rectangle {
+            id:                 _spacer2
+            height:             1
+            width:              parent.width * 0.9
+            color:              isSatellite ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
+            visible:            false//_showCompass
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
 
 //        QGCCompassWidget {
 //            id:                 compass
 //            size:               parent.width * 0.95
 //            active:             instrumentPanel.active
-//            visible:            _showCompass
-//            anchors.horizontalCenter: parent.horizontalCenter
+//            visible:            true//_showCompass
+//            x: 100
+//            y: -100
+//            //anchors.centerIn: parent.Center
+//            //anchors.horizontalCenter: parent.horizontalCenter
 //        }
     }
 }

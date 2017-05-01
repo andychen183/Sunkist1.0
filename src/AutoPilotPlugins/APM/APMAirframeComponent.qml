@@ -1,34 +1,49 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
-import QtQuick.Layouts  1.2
 
 import QGroundControl.FactSystem    1.0
+import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-SetupPage {
-    id:             airframePage
-    pageComponent:  airframePageComponent
+QGCView {
+    id:         qgcView
+    viewPanel:  panel
+
+    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
 
     property real _margins: ScreenTools.defaultFontPixelWidth
     property Fact _frame:   controller.getParameterFact(-1, "FRAME")
 
     APMAirframeComponentController {
         id:         controller
-        factPanel:  airframePage.viewPanel
+        factPanel:  panel
     }
 
     ExclusiveGroup {
@@ -46,6 +61,9 @@ SetupPage {
                 onCurrentAirframeTypeChanged: {
                     airframePicker.model = controller.currentAirframeType.airframes;
                 }
+                onCurrentAirframeChanged : {
+                    hideDialog();
+                }
             }
 
             QGCLabel {
@@ -55,7 +73,7 @@ SetupPage {
                 anchors.right:      parent.right
                 anchors.margins:    _margins
                 wrapMode:           Text.WordWrap
-                text:               qsTr("Select your drone to load the default parameters for it. ")
+                text:               "Select you drone to load the default parameters for it. "
             }
 
             Flow {
@@ -77,57 +95,80 @@ SetupPage {
                         height: (ScreenTools.defaultFontPixelHeight * 14) / 5
                         text:   controller.currentAirframeType.airframes[index].name;
 
-                        onClicked : {
-                            controller.loadParameters(controller.currentAirframeType.airframes[index].params)
-                            hideDialog()
-                        }
+                        onClicked : controller.currentAirframe = controller.currentAirframeType.airframes[index]
                     }
                 }
             }
         }
     }
 
-    Component {
-        id: airframePageComponent
+    QGCViewPanel {
+        id:             panel
+        anchors.fill:   parent
 
-        Column {
-            width:      availableWidth
-            height:     1000
-            spacing:    _margins
+        Item {
+            id:             helpApplyRow
+            anchors.top:    parent.top
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         Math.max(helpText.contentHeight, applyButton.height)
 
-            RowLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margins
-
-                QGCLabel {
-                    font.pointSize:     ScreenTools.mediumFontPointSize
-                    wrapMode:           Text.WordWrap
-                    text:               qsTr("Please select your airframe type")
-                    Layout.fillWidth:   true
-                }
-
-                QGCButton {
-                    text:       qsTr("Load common parameters")
-                    onClicked:  showDialog(applyRestartDialogComponent, qsTr("Load common parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
-                }
+            QGCLabel {
+                id:                     helpText
+                anchors.rightMargin:    _margins
+                anchors.left:           parent.left
+                anchors.right:          applyButton.right
+                text:                   "Please select your airframe type"
+                font.pixelSize:         ScreenTools.mediumFontPixelSize
+                wrapMode:               Text.WordWrap
             }
 
-            Repeater {
-                model: controller.airframeTypesModel
+            QGCButton {
+                id:             applyButton
+                anchors.right:  parent.right
+                text:           "Load common parameters"
+                onClicked:      showDialog(applyRestartDialogComponent, "Load common parameters", qgcView.showDialogDefaultWidth, StandardButton.Close)
+            }
+        }
 
-                QGCRadioButton {
-                    text: object.name
-                    checked: controller.currentAirframeType == object
-                    exclusiveGroup: airframeTypeExclusive
+        Item {
+            id:             helpSpacer
+            anchors.top:    helpApplyRow.bottom
+            height:         parent.spacerHeight
+            width:          10
+        }
 
-                    onCheckedChanged: {
-                        if (checked) {
-                            controller.currentAirframeType = object
+        QGCFlickable {
+            id:             scroll
+            anchors.top:    helpSpacer.bottom
+            anchors.bottom: parent.bottom
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            contentHeight:  frameColumn.height
+            contentWidth:   frameColumn.width
+
+
+
+            Column {
+                id:         frameColumn
+                spacing:    _margins
+
+                Repeater {
+                    model: controller.airframeTypesModel
+
+                    QGCRadioButton {
+                        text: object.name
+                        checked: controller.currentAirframeType == object
+                        exclusiveGroup: airframeTypeExclusive
+
+                        onCheckedChanged: {
+                            if (checked) {
+                                controller.currentAirframeType = object
+                            }
                         }
                     }
                 }
             }
-        } // Column
-    } // Component - pageComponent
-} // SetupPage
+        }
+    } // QGCViewPanel
+} // QGCView

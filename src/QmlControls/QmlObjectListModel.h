@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #ifndef QmlObjectListModel_H
 #define QmlObjectListModel_H
@@ -37,7 +50,6 @@ public:
     void setDirty(bool dirty);
     
     void append(QObject* object);
-    QObjectList swapObjectList(const QObjectList& newlist);
     void clear(void);
     QObject* removeAt(int i);
     QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }
@@ -50,9 +62,6 @@ public:
 
     /// Calls deleteLater on all items and this itself.
     void deleteListAndContents(void);
-
-    /// Clears the list and calls delete on each entry
-    void clearAndDeleteContents(void);
 
 signals:
     void countChanged(int count);

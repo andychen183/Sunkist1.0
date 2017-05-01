@@ -10,7 +10,7 @@ QGCComboBox {
     property Fact fact: Fact { }
     property bool indexModel: true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
 
-    model: fact ? fact.enumStrings : null
+    model: fact.enumStrings
 
     currentIndex: indexModel ? fact.value : fact.enumIndex
 

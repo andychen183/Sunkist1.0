@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /*!
     @file
@@ -15,12 +28,12 @@
 */
 
 #include "LinkConfiguration.h"
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
 #include "SerialLink.h"
 #endif
 #include "UDPLink.h"
 #include "TCPLink.h"
-#if !defined(__mobile__)
+#ifndef __mobile__
 #include "LogReplayLink.h"
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
@@ -79,7 +92,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 {
     LinkConfiguration* config = NULL;
     switch(type) {
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
         case LinkConfiguration::TypeSerial:
             config = new SerialConfiguration(name);
             break;
@@ -117,7 +130,7 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
 {
     LinkConfiguration* dupe = NULL;
     switch(source->type()) {
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
         case TypeSerial:
             dupe = new SerialConfiguration(dynamic_cast<SerialConfiguration*>(source));
             break;
@@ -158,8 +171,6 @@ void LinkConfiguration::setName(const QString name)
 
 void LinkConfiguration::setLink(LinkInterface* link)
 {
-    if(_link != link) {
-        _link = link;
-        emit linkChanged(link);
-    }
+    _link = link;
+    emit linkChanged(link);
 }

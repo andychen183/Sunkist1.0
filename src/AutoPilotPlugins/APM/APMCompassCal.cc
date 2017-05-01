@@ -1,16 +1,28 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #include "APMCompassCal.h"
 #include "AutoPilotPlugin.h"
-#include "ParameterManager.h"
 
 QGC_LOGGING_CATEGORY(APMCompassCalLog, "APMCompassCalLog")
 
@@ -131,25 +143,18 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
         free(worker_data.z[cur_mag]);
     }
 
+    AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     if (result == calibrate_return_ok) {
         for (unsigned cur_mag=0; cur_mag<max_mags; cur_mag++) {
             if (rgCompassAvailable[cur_mag]) {
                 _emitVehicleTextMessage(QString("[cal] mag #%1 off: x:%2 y:%3 z:%4").arg(cur_mag).arg(-sphere_x[cur_mag]).arg(-sphere_y[cur_mag]).arg(-sphere_z[cur_mag]));
 
-                float sensorId = 0.0f;
-                if (cur_mag == 0) {
-                    sensorId = 2.0f;
-                } else if (cur_mag == 1) {
-                    sensorId = 5.0f;
-                } else if (cur_mag == 2) {
-                    sensorId = 6.0f;
-                }
-                if (sensorId != 0.0f) {
-                    _vehicle->sendMavCommand(_vehicle->defaultComponentId(),
-                                             MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS,
-                                             true, /* showErrors */
-                                             sensorId, -sphere_x[cur_mag], -sphere_y[cur_mag], -sphere_z[cur_mag]);
-                }
+                const char* offsetParam = rgCompassParams[cur_mag][0];
+                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_x[cur_mag]);
+                offsetParam = rgCompassParams[cur_mag][1];
+                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_y[cur_mag]);
+                offsetParam = rgCompassParams[cur_mag][2];
+                plugin->getParameterFact(-1, offsetParam)->setRawValue(-sphere_z[cur_mag]);
             }
         }
     }
@@ -583,11 +588,7 @@ APMCompassCal::APMCompassCal(void)
 
 APMCompassCal::~APMCompassCal()
 {
-    if (_calWorkerThread) {
-        _calWorkerThread->terminate();
-        // deleteLater so it happens on correct thread
-        _calWorkerThread->deleteLater();
-    }
+
 }
 
 void APMCompassCal::setVehicle(Vehicle* vehicle)
@@ -609,26 +610,31 @@ void APMCompassCal::startCalibration(void)
     // Simulate a start message
     _emitVehicleTextMessage("[cal] calibration started: mag");
 
-    _calWorkerThread = new CalWorkerThread(_vehicle);
+    _calWorkerThread = new CalWorkerThread(_vehicle, this);
     connect(_calWorkerThread, &CalWorkerThread::vehicleTextMessage, this, &APMCompassCal::vehicleTextMessage);
 
     // Clear the offset parameters so we get raw data
+    AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     for (int i=0; i<3; i++) {
         _calWorkerThread->rgCompassAvailable[i] = true;
 
         const char* deviceIdParam = CalWorkerThread::rgCompassParams[i][3];
-        if (_vehicle->parameterManager()->parameterExists(-1, deviceIdParam)) {
-            _calWorkerThread->rgCompassAvailable[i] = _vehicle->parameterManager()->getParameter(-1, deviceIdParam)->rawValue().toInt() > 0;
-            for (int j=0; j<3; j++) {
-                const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
-                Fact* paramFact = _vehicle->parameterManager()->getParameter(-1, offsetParam);
+        if (plugin->parameterExists(-1, deviceIdParam)) {
+            if (plugin->getParameterFact(-1, deviceIdParam)->rawValue().toInt() > 0) {
+                for (int j=0; j<3; j++) {
+                    const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
+                    if (plugin->parameterExists(-1, offsetParam)) {
+                        Fact* paramFact = plugin->getParameterFact(-1, offsetParam);
 
-                _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
-                paramFact->setRawValue(0.0);
+                        _rgSavedCompassOffsets[i][j] = paramFact->rawValue().toFloat();
+                        paramFact->setRawValue(0.0);
+                        goto has_compass;
+                    }
+                }
             }
-        } else {
-            _calWorkerThread->rgCompassAvailable[i] = false;
         }
+        _calWorkerThread->rgCompassAvailable[i] = false;
+    has_compass:
         qCDebug(APMCompassCalLog) << QStringLiteral("Compass %1 available: %2").arg(i).arg(_calWorkerThread->rgCompassAvailable[i]);
     }
 
@@ -640,11 +646,12 @@ void APMCompassCal::cancelCalibration(void)
     _stopCalibration();
 
     // Put the original offsets back
+    AutoPilotPlugin* plugin = _vehicle->autopilotPlugin();
     for (int i=0; i<3; i++) {
         for (int j=0; j<3; j++) {
             const char* offsetParam = CalWorkerThread::rgCompassParams[i][j];
-            if (_vehicle->parameterManager()->parameterExists(-1, offsetParam)) {
-                _vehicle->parameterManager()->getParameter(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
+            if (plugin->parameterExists(-1, offsetParam)) {
+                plugin->getParameterFact(-1, offsetParam)-> setRawValue(_rgSavedCompassOffsets[i][j]);
             }
         }
     }
@@ -699,6 +706,5 @@ void APMCompassCal::_stopCalibration(void)
 
 void APMCompassCal::_emitVehicleTextMessage(const QString& message)
 {
-    qCDebug(APMCompassCalLog()) << message;
     emit vehicleTextMessage(_vehicle->id(), 0, MAV_SEVERITY_INFO, message);
 }

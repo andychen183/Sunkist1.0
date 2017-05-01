@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -33,7 +46,9 @@ QString FlightModesComponent::name(void) const
 
 QString FlightModesComponent::description(void) const
 {
-    return tr("Flight Modes Setup is used to configure the transmitter switches associated with Flight Modes.");
+    // FIXME: Better text
+    return tr("The Flight Modes Component is used to set the switches associated with Flight Modes. "
+              "At a minimum the Main Mode Switch must be assigned prior to flight.");
 }
 
 QString FlightModesComponent::iconResource(void) const
@@ -43,35 +58,23 @@ QString FlightModesComponent::iconResource(void) const
 
 bool FlightModesComponent::requiresSetup(void) const
 {
-    return _vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ? false : true;
 }
 
 bool FlightModesComponent::setupComplete(void) const
 {
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
-        return true;
-    }
-
-    if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0 ||
-            (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_FLTMODE") && _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_FLTMODE")->rawValue().toInt() != 0)) {
-        return true;
-    }
-
-    return false;
+    return _autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1 ||
+            _autopilot->getParameterFact(FactSystem::defaultComponentId, "RC_MAP_MODE_SW")->rawValue().toInt() != 0;
 }
 
 QStringList FlightModesComponent::setupCompleteChangedTriggerList(void) const
 {
-    QStringList list;
-
-    list << QStringLiteral("RC_MAP_MODE_SW") << QStringLiteral("RC_MAP_FLTMODE");
-
-    return list;
+    return QStringList("RC_MAP_MODE_SW");
 }
 
 QUrl FlightModesComponent::setupSource(void) const
 {
-    return QUrl::fromUserInput("qrc:/qml/PX4FlightModes.qml");
+    return QUrl::fromUserInput("qrc:/qml/FlightModesComponent.qml");
 }
 
 QUrl FlightModesComponent::summaryQmlSource(void) const
@@ -81,7 +84,7 @@ QUrl FlightModesComponent::summaryQmlSource(void) const
 
 QString FlightModesComponent::prerequisiteSetup(void) const
 {
-    if (_vehicle->parameterManager()->getParameter(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
+    if (_autopilot->getParameterFact(-1, "COM_RC_IN_MODE")->rawValue().toInt() == 1) {
         // No RC input
         return QString();
     } else {
@@ -92,10 +95,8 @@ QString FlightModesComponent::prerequisiteSetup(void) const
             return plugin->airframeComponent()->name();
         } else if (!plugin->radioComponent()->setupComplete()) {
             return plugin->radioComponent()->name();
-        } else if (!_vehicle->hilMode() && !plugin->sensorsComponent()->setupComplete()) {
-            return plugin->sensorsComponent()->name();
         }
     }
-
+    
     return QString();
 }

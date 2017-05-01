@@ -10,8 +10,8 @@ Text {
 
     property bool enabled: true
 
-    font.pointSize: ScreenTools.defaultFontPointSize
-    font.family:    ScreenTools.normalFontFamily
+    font.pixelSize: ScreenTools.defaultFontPixelSize
+    fontSizeMode:   Text.HorizontalFit
     color:          __qgcPal.text
     antialiasing:   true
 }

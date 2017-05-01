@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #include "JoystickManager.h"
 #include "QGCApplication.h"
@@ -14,15 +27,11 @@
 #include <QQmlEngine>
 
 #ifndef __mobile__
-    #include "JoystickSDL.h"
-    #define __sdljoystick__
-#endif
-
-#ifdef __android__
-    /*
-     * Android Joystick not yet supported
-     * #include "JoystickAndroid.h"
-     */
+    #ifdef Q_OS_MAC
+        #include <SDL.h>
+    #else
+        #include <SDL/SDL.h>
+    #endif
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -35,15 +44,7 @@ JoystickManager::JoystickManager(QGCApplication* app)
     , _activeJoystick(NULL)
     , _multiVehicleManager(NULL)
 {
-}
-
-JoystickManager::~JoystickManager() {
-    QMap<QString, Joystick*>::iterator i;
-    for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
-        qDebug() << "Releasing joystick:" << i.key();
-        delete i.value();
-    }
-    qDebug() << "Done";
+    
 }
 
 void JoystickManager::setToolbox(QGCToolbox *toolbox)
@@ -54,13 +55,33 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
-#ifdef __sdljoystick__
-    _name2JoystickMap = JoystickSDL::discover(_multiVehicleManager);
-#elif defined(__android__)
-    /*
-     * Android Joystick not yet supported
-     * _name2JoystickMap = JoystickAndroid::discover(_multiVehicleManager);
-     */
+#ifndef __mobile__
+    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
+        qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
+        return;
+    }
+
+    // Load available joysticks
+
+    qCDebug(JoystickManagerLog) << "Available joysticks";
+
+    for (int i=0; i<SDL_NumJoysticks(); i++) {
+        QString name = SDL_JoystickName(i);
+
+        if (!_name2JoystickMap.contains(name)) {
+            int axisCount, buttonCount;
+
+            SDL_Joystick* sdlJoystick = SDL_JoystickOpen(i);
+            axisCount = SDL_JoystickNumAxes(sdlJoystick);
+            buttonCount = SDL_JoystickNumButtons(sdlJoystick);
+            SDL_JoystickClose(sdlJoystick);
+
+            qCDebug(JoystickManagerLog) << "\t" << name << "axes:" << axisCount << "buttons:" << buttonCount;
+            _name2JoystickMap[name] = new Joystick(name, axisCount, buttonCount, i, _multiVehicleManager);
+        } else {
+            qCDebug(JoystickManagerLog) << "\tSkipping duplicate" << name;
+        }
+    }
 #endif
 
     if (!_name2JoystickMap.count()) {
@@ -71,8 +92,10 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
     _setActiveJoystickFromSettings();
 }
 
+
 void JoystickManager::_setActiveJoystickFromSettings(void)
 {
+#ifndef __mobile__
     QSettings settings;
     
     settings.beginGroup(_settingsGroup);
@@ -84,6 +107,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     
     setActiveJoystick(_name2JoystickMap.value(name, _name2JoystickMap.first()));
     settings.setValue(_settingsKeyActiveJoystick, _activeJoystick->name());
+#endif
 }
 
 Joystick* JoystickManager::activeJoystick(void)
@@ -93,6 +117,9 @@ Joystick* JoystickManager::activeJoystick(void)
 
 void JoystickManager::setActiveJoystick(Joystick* joystick)
 {
+#ifdef __mobile__
+    Q_UNUSED(joystick)
+#else
     QSettings settings;
     
     if (!_name2JoystickMap.contains(joystick->name())) {
@@ -111,6 +138,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
     
     emit activeJoystickChanged(_activeJoystick);
     emit activeJoystickNameChanged(_activeJoystick->name());
+#endif
 }
 
 QVariantList JoystickManager::joysticks(void)
@@ -131,7 +159,11 @@ QStringList JoystickManager::joystickNames(void)
 
 QString JoystickManager::activeJoystickName(void)
 {
+#ifdef __mobile__
+    return QString();
+#else
     return _activeJoystick ? _activeJoystick->name() : QString();
+#endif
 }
 
 void JoystickManager::setActiveJoystickName(const QString& name)

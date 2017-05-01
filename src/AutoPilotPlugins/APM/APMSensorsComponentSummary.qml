@@ -46,28 +46,29 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
+        anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: qsTr("Compass 1:")
+            labelText: "Compass 1:"
             visible:    compass1Available
-            valueText:  compass1Calibrated ? qsTr("Ready") : qsTr("Setup required")
+            valueText:  compass1Calibrated ? "Ready" : "Setup required"
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Compass 2:")
+            labelText: "Compass 2:"
             visible:    compass2Available
-            valueText:  compass2Calibrated ? qsTr("Ready") : qsTr("Setup required")
+            valueText:  compass2Calibrated ? "Ready" : "Setup required"
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Compass 3:")
+            labelText: "Compass 3:"
             visible:    compass3Available
-            valueText:  compass3Calibrated ? qsTr("Ready") : qsTr("Setup required")
+            valueText:  compass3Calibrated ? "Ready" : "Setup required"
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Accelerometer:")
-            valueText: controller.accelSetupNeeded ? qsTr("Setup required") : qsTr("Ready")
+            labelText: "Accelerometer:"
+            valueText: controller.accelSetupNeeded ? "Setup required" : "Ready"
         }
     }
 }

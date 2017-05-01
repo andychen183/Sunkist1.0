@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 
 /// @file
@@ -45,10 +58,10 @@ public:
     Q_PROPERTY(int minChannelCount MEMBER _chanMinimum CONSTANT)
     Q_PROPERTY(int channelCount READ channelCount NOTIFY channelCountChanged)
     
-    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText      NOTIFY statusTextChanged)
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton    NOTIFY cancelButtonChanged)
-    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton      NOTIFY nextButtonChanged)
-    Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton      NOTIFY skipButtonChanged)
+    Q_PROPERTY(QQuickItem* statusText MEMBER _statusText)
+    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
+    Q_PROPERTY(QQuickItem* nextButton MEMBER _nextButton)
+    Q_PROPERTY(QQuickItem* skipButton MEMBER _skipButton)
     
     Q_PROPERTY(bool rollChannelMapped READ rollChannelMapped NOTIFY rollChannelMappedChanged)
     Q_PROPERTY(bool pitchChannelMapped READ pitchChannelMapped NOTIFY pitchChannelMappedChanged)
@@ -103,11 +116,6 @@ public:
     void setTransmitterMode(int mode);
     
 signals:
-    void statusTextChanged(void);
-    void cancelButtonChanged(void);
-    void nextButtonChanged(void);
-    void skipButtonChanged(void);
-
     void channelCountChanged(int channelCount);
     void channelRCValueChanged(int channel, int rcValue);
     
@@ -129,14 +137,11 @@ signals:
     void imageHelpChanged(QString source);
     void transmitterModeChanged(int mode);
     
-    /// Signalled when in unit test mode and a message box should be displayed by the next button
+    // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed(void);
 
-    /// Signalled to QML to indicate reboot is required
+    // Signaled to QML to indicator reboot is required
     void functionMappingChangedAPMReboot(void);
-
-    /// Signalled to Qml to indicate cal failure due to reversed throttle
-    void throttleReversedCalFailure(void);
 
 private slots:
     void _rcChannelsChanged(int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
@@ -149,7 +154,23 @@ private:
         rcCalFunctionPitch,
         rcCalFunctionYaw,
         rcCalFunctionThrottle,
+        rcCalFunctionModeSwitch,
+        rcCalFunctionPosCtlSwitch,
+        rcCalFunctionLoiterSwitch,
+        rcCalFunctionReturnSwitch,
+        rcCalFunctionAcroSwitch,
+        rcCalFunctionFlaps,
+        rcCalFunctionAux1,
+        rcCalFunctionAux2,
         rcCalFunctionMax,
+        
+        // Attitude functions are roll/pitch/yaw/throttle
+        rcCalFunctionFirstAttitudeFunction = rcCalFunctionRoll,
+        rcCalFunctionLastAttitudeFunction = rcCalFunctionThrottle,
+        
+        // Non-Attitude functions are everything else
+        rcCalFunctionFirstNonAttitudeFunction = rcCalFunctionModeSwitch,
+        rcCalFunctionLastNonAttitudeFunction = rcCalFunctionAux2,
     };
     
     /// @brief The states of the calibration state machine.
@@ -203,10 +224,15 @@ private:
     void _inputStickMin(enum rcCalFunctions function, int channel, int value);
     void _inputCenterWait(enum rcCalFunctions function, int channel, int value);
     void _inputSwitchMinMax(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsDown(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsUp(enum rcCalFunctions function, int channel, int value);
     void _inputSwitchDetect(enum rcCalFunctions function, int channel, int value);
+    void _inputFlapsDetect(enum rcCalFunctions function, int channel, int value);
     
     void _switchDetect(enum rcCalFunctions function, int channel, int value, bool moveToNextStep);
     
+    void _saveFlapsDown(void);
+    void _skipFlaps(void);
     void _saveAllTrims(void);
     
     bool _stickSettleComplete(int value);

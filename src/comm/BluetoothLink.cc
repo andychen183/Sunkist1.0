@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -76,14 +89,19 @@ QString BluetoothLink::getName() const
     return _config->name();
 }
 
-void BluetoothLink::_writeBytes(const QByteArray bytes)
+void BluetoothLink::writeBytes(const char* data, qint64 size)
+{
+    _sendBytes(data, size);
+}
+
+void BluetoothLink::_sendBytes(const char* data, qint64 size)
 {
     if(_targetSocket)
     {
         if(_targetSocket->isWritable())
         {
-            if(_targetSocket->write(bytes) > 0) {
-                _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
+            if(_targetSocket->write(data, size) > 0) {
+                _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
             }
             else
                 qWarning() << "Bluetooth write error";
@@ -150,7 +168,7 @@ bool BluetoothLink::_hardwareConnect()
     _discoveryAgent->start();
 #else
     _createSocket();
-    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::SerialPort));
+    _targetSocket->connectToService(QBluetoothAddress(_config->device().address), QBluetoothUuid(QBluetoothUuid::Rfcomm));
 #endif
     return true;
 }
@@ -352,17 +370,9 @@ void BluetoothConfiguration::startScan()
 
 void BluetoothConfiguration::deviceDiscovered(QBluetoothDeviceInfo info)
 {
+    //print_device_info(info);
     if(!info.name().isEmpty() && info.isValid())
     {
-#if 0
-        qDebug() << "Name:           " << info.name();
-        qDebug() << "Address:        " << info.address().toString();
-        qDebug() << "Service Classes:" << info.serviceClasses();
-        QList<QBluetoothUuid> uuids = info.serviceUuids();
-        foreach (QBluetoothUuid uuid, uuids) {
-            qDebug() << "Service UUID:   " << uuid.toString();
-        }
-#endif
         BluetoothData data;
         data.name    = info.name();
 #ifdef __ios__

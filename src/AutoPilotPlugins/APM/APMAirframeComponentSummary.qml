@@ -20,22 +20,20 @@ FactPanel {
 
     property Fact sysIdFact:        controller.getParameterFact(-1, "FRAME")
 
+
     Column {
-        anchors.fill:       parent
+        anchors.fill: parent
+        anchors.margins: 8
+
         VehicleSummaryRow {
             id: nameRow;
-            labelText: qsTr("Frame Type:")
-            valueText: controller.currentAirframeTypeName() + " " + (sysIdFact.valueString === "0" ? "Plus"
+            labelText: "Frame Type:"
+            valueText: sysIdFact.valueString === "0" ? "Plus"
                      : sysIdFact.valueString === "1" ? "X"
                      : sysIdFact.valueString === "2" ? "V"
                      : sysIdFact.valueString == "3" ? "H"
-                     : /* Fact.value == 10 */  "New Y6");
+                     :/* Fact.value == 10 */ "New Y6";
 
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Firmware Version:")
-            valueText: activeVehicle.firmwareMajorVersion == -1 ? qsTr("Unknown") : activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion + activeVehicle.firmwareVersionTypeString
         }
     }
 }

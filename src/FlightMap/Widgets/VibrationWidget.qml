@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 import QtQuick          2.4
 import QtQuick.Controls 1.4
@@ -20,6 +33,7 @@ import QGroundControl               1.0
 
 QGCFlickable {
     id:                 _root
+    visible:            true//_activeVehicle
     height:             Math.min(maxHeight, innerItem.height)
     contentHeight:      innerItem.height
     flickableDirection: Flickable.VerticalFlick
@@ -29,7 +43,7 @@ QGCFlickable {
     property color  backgroundColor
     property var    maxHeight
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property real   _margins:       ScreenTools.defaultFontPixelWidth / 2
     property real   _barWidth:      Math.round(ScreenTools.defaultFontPixelWidth * 3)
 
@@ -47,7 +61,7 @@ QGCFlickable {
         QGCLabel {
             id:     title
             color:  textColor
-            text:   qsTr("Vibe")
+            text:   "Vibe"
             anchors.horizontalCenter: barRow.horizontalCenter
         }
 
@@ -128,7 +142,7 @@ QGCFlickable {
             anchors.left:       barRow.right
             anchors.right:      parent.right
             color:              textColor
-            text:               qsTr("Clip count")
+            text:               "Clip count"
             horizontalAlignment: Text.AlignHCenter
         }
 
@@ -138,17 +152,17 @@ QGCFlickable {
             anchors.horizontalCenter: clipLabel.horizontalCenter
 
             QGCLabel {
-                text: qsTr("Accel 1: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount1.valueString : "")
+                text: "Accel 1: " + (_activeVehicle ? _activeVehicle.vibration.clipCount1.valueString : "")
                 color: textColor
             }
 
             QGCLabel {
-                text: qsTr("Accel 2: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount2.valueString : "")
+                text: "Accel 2: " + (_activeVehicle ? _activeVehicle.vibration.clipCount2.valueString : "")
                 color: textColor
             }
 
             QGCLabel {
-                text: qsTr("Accel 2: ") + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
+                text: "Accel 2: " + (_activeVehicle ? _activeVehicle.vibration.clipCount3.valueString : "")
                 color: textColor
             }
         }
@@ -157,12 +171,12 @@ QGCFlickable {
         Rectangle {
             anchors.fill:   parent
             color:          backgroundColor
-            opacity:        0.75
+            opacity:        0.95
             visible:        _activeVehicle ? isNaN(_activeVehicle.vibration.xAxis.value) : false
 
             QGCLabel {
                 anchors.fill:   parent
-                text:           qsTr("Not Available")
+                text:           "Not Available"
                 color:          textColor
                 horizontalAlignment:    Text.AlignHCenter
                 verticalAlignment:      Text.AlignVCenter

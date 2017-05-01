@@ -172,11 +172,17 @@ void XbeeLink::_disconnect(void)
 	emit disconnected();
 }
 
-void XbeeLink::_writeBytes(const QByteArray bytes)
+void XbeeLink::writeBytes(const char *bytes, qint64 length)  // TO DO: delete the data array
 {
-	if(!xbee_nsenddata(this->m_xbeeCon,const_cast<char*>(bytes.data()),bytes.size())) // return value of 0 is successful written
+	char *data;
+	data = new char[length];
+	for(long i=0;i<length;i++)
 	{
-		_logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
+		data[i] = bytes[i];
+	}
+	if(!xbee_nsenddata(this->m_xbeeCon,data,length)) // return value of 0 is successful written
+	{
+		_logOutputDataRate(length, QDateTime::currentMSecsSinceEpoch());
 	}
 	else
 	{

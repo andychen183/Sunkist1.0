@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -48,7 +61,7 @@ QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString
 
 QGCJSBSimLink::~QGCJSBSimLink()
 {   //do not disconnect unless it is connected.
-    //disconnectSimulation will delete the memory that was allocated for process, terraSync and socket
+    //disconnectSimulation will delete the memory that was allocated for proces, terraSync and socket
     if(connectState){
        disconnectSimulation();
     }
@@ -229,26 +242,26 @@ void QGCJSBSimLink::updateControls(quint64 time, float rollAilerons, float pitch
     Q_UNUSED(systemMode);
     Q_UNUSED(navMode);
 
-    if(!qIsNaN(rollAilerons) && !qIsNaN(pitchElevator) && !qIsNaN(yawRudder) && !qIsNaN(throttle))
+    if(!isnan(rollAilerons) && !isnan(pitchElevator) && !isnan(yawRudder) && !isnan(throttle))
     {
         QString state("%1\t%2\t%3\t%4\t%5\n");
         state = state.arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(true).arg(throttle);
-        emit _invokeWriteBytes(state.toLatin1());
+        writeBytes(state.toLatin1().constData(), state.length());
     }
     else
     {
-        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << qIsNaN(rollAilerons) << ", pitch: " << qIsNaN(pitchElevator) << ", yaw: " << qIsNaN(yawRudder) << ", throttle: " << qIsNaN(throttle);
+        qDebug() << "HIL: Got NaN values from the hardware: isnan output: roll: " << isnan(rollAilerons) << ", pitch: " << isnan(pitchElevator) << ", yaw: " << isnan(yawRudder) << ", throttle: " << isnan(throttle);
     }
     //qDebug() << "Updated controls" << state;
 }
 
-void QGCJSBSimLink::_writeBytes(const QByteArray data)
+void QGCJSBSimLink::writeBytes(const char* data, qint64 size)
 {
     //#define QGCJSBSimLink_DEBUG
 #ifdef QGCJSBSimLink_DEBUG
     QString bytes;
     QString ascii;
-    for (int i=0, size = data.size(); i<size; i++)
+    for (int i=0; i<size; i++)
     {
         unsigned char v = data[i];
         bytes.append(QString().sprintf("%02x ", v));
@@ -265,7 +278,7 @@ void QGCJSBSimLink::_writeBytes(const QByteArray data)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    if (connectState && socket) socket->writeDatagram(data, currentHost, currentPort);
+    if (connectState && socket) socket->writeDatagram(data, size, currentHost, currentPort);
 }
 
 /**

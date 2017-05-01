@@ -111,7 +111,7 @@ Rectangle {
                 Image {
                     id:                 _JapaneseRC
                     visible:            QGroundControl.rcMode == 0
-                    source:             "qrc:/res/resources/JapaneseRC.png"
+                    source:             "qrc:/qmlimages/resources/JapaneseRC.png"
                     mipmap:             true
                     smooth:             true
                 }
@@ -119,7 +119,7 @@ Rectangle {
                 Image {
                     id:                 _AmericanRC
                     visible:            QGroundControl.rcMode == 1
-                    source:             "qrc:/res/resources/AmericanRC.png"
+                    source:             "qrc:/qmlimages/resources/AmericanRC.png"
                     mipmap:             true
                     smooth:             true
                 }
@@ -128,7 +128,7 @@ Rectangle {
                 Image {
                     id:                 _ChineseRC
                     visible:            QGroundControl.rcMode == 2
-                    source:             "qrc:/res/resources/ChineseRC.png"
+                    source:             "qrc:/qmlimages/resources/ChineseRC.png"
                     mipmap:             true
                     smooth:             true
                 }
@@ -136,7 +136,7 @@ Rectangle {
                 Image {
                     id:                 _GravityRC
                     visible:            QGroundControl.rcMode == 3
-                    source:             "qrc:/res/resources/GravityRC.png"
+                    source:             "qrc:/qmlimages/resources/GravityRC.png"
                     mipmap:             true
                     smooth:             true
                 }

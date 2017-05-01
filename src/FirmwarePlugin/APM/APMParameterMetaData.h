@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #ifndef APMParameterMetaData_H
 #define APMParameterMetaData_H
@@ -20,9 +33,6 @@
 #include "FactSystem.h"
 #include "AutoPilotPlugin.h"
 #include "Vehicle.h"
-
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
-Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
 class APMFactMetaDataRaw
 {
@@ -44,6 +54,11 @@ public:
     QList<QPair<QString, QString> > bitmask;
 };
 
+/// @file
+///     @author Don Gagne <don@thegagnes.com>
+
+Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataLog)
+Q_DECLARE_LOGGING_CATEGORY(APMParameterMetaDataVerboseLog)
 
 /// Collection of Parameter Facts for PX4 AutoPilot
 
@@ -54,12 +69,15 @@ class APMParameterMetaData : public QObject
     Q_OBJECT
     
 public:
-    APMParameterMetaData(void);
+    /// @param uas Uas which this set of facts is associated with
+    APMParameterMetaData(QObject* parent = NULL);
 
-    void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
-    void loadParameterFactMetaDataFile(const QString& metaDataFile);
-
-    static void getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion);
+    /// Override from ParameterLoader
+    virtual QString getDefaultComponentIdParam(void) const { return QString("SYSID_SW_TYPE"); }    
+    
+    // Overrides from ParameterLoader
+    static void addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType);
+    static void addMetaDataToFacts(QVariantMap &facts, MAV_TYPE vehicleType);
 
 private:
     enum {
@@ -72,16 +90,18 @@ private:
         XmlStateFoundGroup,
         XmlStateFoundParameter,
         XmlStateDone
-    };    
+    };
+    
 
-    QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
-    bool skipXMLBlock(QXmlStreamReader& xml, const QString& blockName);
-    bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);
-    void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
-    QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
+    static void _loadParameterFactMetaData();
+    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
+    static bool skipXMLBlock(QXmlStreamReader& xml, const QString& blockName);
+    static bool parseParameterAttributes(QXmlStreamReader& xml, APMFactMetaDataRaw *rawMetaData);
+    static void correctGroupMemberships(ParameterNametoFactMetaDataMap& parameterToFactMetaDataMap, QMap<QString,QStringList>& groupMembers);
+    static QString mavTypeToString(MAV_TYPE vehicleTypeEnum);
 
-    bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
-    QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>
+    static bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
+    static QMap<QString, ParameterNametoFactMetaDataMap> _vehicleTypeToParametersMap; ///< Maps from a vehicle type to paramametertoFactMeta map>
 };
 
 #endif

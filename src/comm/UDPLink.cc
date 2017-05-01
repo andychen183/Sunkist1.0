@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -16,6 +29,12 @@
  */
 
 #include <QtGlobal>
+#if QT_VERSION > 0x050401
+#define UDP_BROKEN_SIGNAL 1
+#else
+#define UDP_BROKEN_SIGNAL 0
+#endif
+
 #include <QTimer>
 #include <QList>
 #include <QDebug>
@@ -92,6 +111,9 @@ UDPLink::~UDPLink()
     quit();
     // Wait for it to exit
     wait();
+    while(_outQueue.count() > 0) {
+        delete _outQueue.dequeue();
+    }
     this->deleteLater();
 }
 
@@ -102,7 +124,25 @@ UDPLink::~UDPLink()
 void UDPLink::run()
 {
     if(_hardwareConnect()) {
-        exec();
+        if(UDP_BROKEN_SIGNAL) {
+            bool loop = false;
+            while(true) {
+                //-- Anything to read?
+                loop = _socket->hasPendingDatagrams();
+                if(loop) {
+                    readBytes();
+                }
+                //-- Loop right away if busy
+                if((_dequeBytes() || loop) && _running)
+                    continue;
+                if(!_running)
+                    break;
+                //-- Settle down (it gets here if there is nothing to read or write)
+                _socket->waitForReadyRead(5);
+            }
+        } else {
+            exec();
+        }
     }
     if (_socket) {
         _deregisterZeroconf();
@@ -134,11 +174,42 @@ void UDPLink::removeHost(const QString& host)
     _config->removeHost(host);
 }
 
-void UDPLink::_writeBytes(const QByteArray data)
+void UDPLink::writeBytes(const char* data, qint64 size)
 {
-    if (!_socket)
+    if (!_socket) {
         return;
+    }
+    if(UDP_BROKEN_SIGNAL) {
+        QByteArray* qdata = new QByteArray(data, size);
+        QMutexLocker lock(&_mutex);
+        _outQueue.enqueue(qdata);
+    } else {
 
+//        for (int j = 0; j< size; j++)
+//        {
+//            qWarning() << "-------------------------";
+//            qWarning() << "mavlink_msg_to_send_buffer is " << data;
+//        }
+        _sendBytes(data, size);
+    }
+}
+
+
+bool UDPLink::_dequeBytes()
+{
+    QMutexLocker lock(&_mutex);
+    if(_outQueue.count() > 0) {
+        QByteArray* qdata = _outQueue.dequeue();
+        lock.unlock();
+        _sendBytes(qdata->data(), qdata->size());
+        delete qdata;
+        lock.relock();
+    }
+    return (_outQueue.count() > 0);
+}
+
+void UDPLink::_sendBytes(const char* data, qint64 size)
+{
     QStringList goneHosts;
     // Send to all connected systems
     QString host;
@@ -146,7 +217,7 @@ void UDPLink::_writeBytes(const QByteArray data)
     if(_config->firstHost(host, port)) {
         do {
             QHostAddress currentHost(host);
-            if(_socket->writeDatagram(data, currentHost, (quint16)port) < 0) {
+            if(_socket->writeDatagram(data, size, currentHost, (quint16)port) < 0) {
                 // This host is gone. Add to list to be removed
                 // We should keep track of hosts that were manually added (static) and
                 // hosts that were added because we heard from them (dynamic). Only
@@ -160,7 +231,7 @@ void UDPLink::_writeBytes(const QByteArray data)
                 // "host not there" takes time too regardless of size of data. In fact,
                 // 1 byte or "UDP frame size" bytes are the same as that's the data
                 // unit sent by UDP.
-                _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
+                _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
             }
         } while (_config->nextHost(host, port));
         //-- Remove hosts that are no longer there
@@ -195,6 +266,8 @@ void UDPLink::readBytes()
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
         _config->addHost(sender.toString(), (int)senderPort);
+        if(UDP_BROKEN_SIGNAL && !_running)
+            break;
     }
     //-- Send whatever is left
     if(databuffer.size()) {
@@ -251,7 +324,7 @@ bool UDPLink::_hardwareConnect()
     _connectState = _socket->bind(host, _config->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
         //-- Make sure we have a large enough IO buffers
-#ifdef __mobile__
+#ifdef __mobile
         _socket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,     64 * 1024);
         _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 128 * 1024);
 #else
@@ -259,7 +332,10 @@ bool UDPLink::_hardwareConnect()
         _socket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 512 * 1024);
 #endif
         _registerZeroconf(_config->localPort(), kZeroconfRegistration);
-        QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
+        //-- Connect signal if this version of Qt is not broken
+        if(!UDP_BROKEN_SIGNAL) {
+            QObject::connect(_socket, &QUdpSocket::readyRead, this, &UDPLink::readBytes);
+        }
         emit connected();
     } else {
         emit communicationError("UDP Link Error", "Error binding UDP port");

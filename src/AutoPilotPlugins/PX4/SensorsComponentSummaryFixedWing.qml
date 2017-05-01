@@ -25,25 +25,26 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
+        anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: qsTr("Compass:")
-            valueText: mag0IdFact ? (mag0IdFact.value  === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
+            labelText: "Compass:"
+            valueText: mag0IdFact ? (mag0IdFact.value  === 0 ? "Setup required" : "Ready") : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Gyro:")
-            valueText: gyro0IdFact ? (gyro0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
+            labelText: "Gyro:"
+            valueText: gyro0IdFact ? (gyro0IdFact.value === 0 ? "Setup required" : "Ready") : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Accelerometer:")
-            valueText: accel0IdFact ? (accel0IdFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
+            labelText: "Accelerometer:"
+            valueText: accel0IdFact ? (accel0IdFact.value === 0 ? "Setup required" : "Ready") : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Airspeed:")
-            valueText: dpressOffFact ? (dpressOffFact.value === 0 ? qsTr("Setup required") : qsTr("Ready")) : ""
+            labelText: "Airspeed:"
+            valueText: dpressOffFact ? (dpressOffFact.value === 0 ? "Setup required" : "Ready") : ""
         }
     }
 }

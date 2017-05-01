@@ -60,7 +60,6 @@
 #include <QtLocation/private/qgeotilecache_p.h>
 #endif
 #endif
-
 #include <QDir>
 #include <QStandardPaths>
 
@@ -95,12 +94,9 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     //   Changes here must reflect those in QGCMapEngine.cpp
 
     QList<QGeoMapType> mapTypes;
-
-#ifndef QGC_NO_GOOGLE_MAPS
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Google Street Map",        "Google street map",            false,  false,  UrlFactory::GoogleMap);
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Google Satellite Map",     "Google satellite map",         false,  false,  UrlFactory::GoogleSatellite);
     mapTypes << QGeoMapType(QGeoMapType::TerrainMap,        "Google Terrain Map",       "Google terrain map",           false,  false,  UrlFactory::GoogleTerrain);
-#endif
 
     /* TODO:
      *  Proper google hybrid maps requires collecting two separate bimaps and overlaying them.
@@ -114,18 +110,13 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",           false,  false,  UrlFactory::BingSatellite);
     mapTypes << QGeoMapType(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",              false,  false,  UrlFactory::BingHybrid);
 
-    // Statkart
-    mapTypes << QGeoMapType(QGeoMapType::TerrainMap,             "Statkart Topo2",           "Statkart Topo2",               false,  false,  UrlFactory::StatkartTopo);
-
     /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap);
     */
 
     // MapQuest
-    /*
     mapTypes << QGeoMapType(QGeoMapType::StreetMap,         "MapQuest Street Map",      "MapQuest street map",          false,  false,  UrlFactory::MapQuestMap);
     mapTypes << QGeoMapType(QGeoMapType::SatelliteMapDay,   "MapQuest Satellite Map",   "MapQuest satellite map",       false,  false,  UrlFactory::MapQuestSat);
-    */
 
     /*
      * These are OK as you need your own token for accessing it. Out-of-the box, QGC does not even offer these unless you enter a proper MapBox token.
@@ -208,12 +199,10 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     if (parameters.contains(QStringLiteral("mapping.cache.directory")))
         cacheDir = parameters.value(QStringLiteral("mapping.cache.directory")).toString();
     else {
-        cacheDir = getQGCMapEngine()->getCachePath();
-        if(!QFileInfo(cacheDir).exists()) {
-            if(!QDir::root().mkpath(cacheDir)) {
-                qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-                cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
-            }
+        cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+        if(!QDir::root().mkpath(cacheDir)) {
+            qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
+            cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
         }
     }
     if(!QFileInfo(cacheDir).exists()) {
@@ -238,13 +227,10 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     //-- It won't work with less than 1M of memory cache
     if(memLimit < 1024 * 1024)
         memLimit = 1024 * 1024;
-    //-- On the other hand, Qt uses signed 32-bit integers. Limit to 1G to round it down (you don't need more than that).
-    if(memLimit > 1024 * 1024 * 1024)
-        memLimit = 1024 * 1024 * 1024;
-    //-- Disable Qt's disk cache (sort of)
+    //-- Disable Qt's disk cache (set memory cache otherwise Qtlocation won't work)
 #if QT_VERSION >= 0x050600
-    QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
-    setTileCache(pTileCache);
+        QAbstractGeoTileCache *pTileCache = new QGeoFileTileCache(cacheDir);
+        setTileCache(pTileCache);
 #else
     QGeoTileCache* pTileCache = createTileCacheWithDir(cacheDir);
 #endif
@@ -252,7 +238,6 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
     {
         //-- We're basically telling it to use 100k of disk for cache. It doesn't like
         //   values smaller than that and I could not find a way to make it NOT cache.
-        //   We handle our own disk caching elsewhere.
         pTileCache->setMaxDiskUsage(1024 * 100);
         pTileCache->setMaxMemoryUsage(memLimit);
     }

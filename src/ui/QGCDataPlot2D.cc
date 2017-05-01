@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -522,7 +535,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
                 {
                     bool okx = true;
                     x = text.toDouble(&okx);
-                    if (okx && !qIsNaN(x) && !qIsInf(x))
+                    if (okx && !isnan(x) && !isinf(x))
                     {
                         headerfound = true;
                     }
@@ -548,7 +561,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
                         y = text.toDouble(&oky);
                         // Only INF is really an issue for the plot
                         // NaN is fine
-                        if (oky && !qIsNaN(y) && !qIsInf(y) && text.length() > 0 && text != " " && text != "\n" && text != "\r" && text != "\t")
+                        if (oky && !isnan(y) && !isinf(y) && text.length() > 0 && text != " " && text != "\n" && text != "\r" && text != "\t")
                         {
                             // Only append definitely valid values
                             xValues.value(curveName)->append(x);
@@ -631,8 +644,8 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
             function = tr("Regression method %1 not found").arg(method);
         }
 
-        delete[] x;
-        delete[] y;
+        delete x;
+        delete y;
     } else {
         // xName == yName
         function = tr("Please select different X and Y dimensions, not %1 = %2").arg(xName, yName);
@@ -680,7 +693,7 @@ bool QGCDataPlot2D::linearRegression(double *x, double *y, int n, double *a, dou
     syy = sumy2 - sumy * sumy / n;
     sxy = sumxy - sumx * sumy / n;
 
-    /* Infinite slope (b), non existent intercept (a) */
+    /* Infinite slope (b), non existant intercept (a) */
     if (fabs(sxx) == 0)
         return false;
 

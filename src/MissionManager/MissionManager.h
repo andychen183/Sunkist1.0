@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #ifndef MissionManager_H
 #define MissionManager_H
@@ -31,6 +44,7 @@ class MissionManager : public QObject
     Q_OBJECT
     
 public:
+    /// @param uas Uas which this set of facts is associated with
     MissionManager(Vehicle* vehicle);
     ~MissionManager();
     
@@ -44,11 +58,6 @@ public:
     ///     @param missionItems Items to send to vehicle
     void writeMissionItems(const QList<MissionItem*>& missionItems);
     
-    /// Writes the specified set mission items to the vehicle as an ArduPilot guided mode mission item.
-    ///     @param gotoCoord Coordinate to move to
-    ///     @param altChangeOnly true: only altitude change, false: lat/lon/alt change
-    void writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoCoord, bool altChangeOnly);
-
     /// Error codes returned in error signal
     typedef enum {
         InternalError,
@@ -62,7 +71,7 @@ public:
     } ErrorCode_t;
 
     // These values are public so the unit test can set appropriate signal wait times
-    static const int _ackTimeoutMilliseconds = 1000;
+    static const int _ackTimeoutMilliseconds= 2000;
     static const int _maxRetryCount = 5;
     
 signals:
@@ -81,11 +90,10 @@ private:
         AckMissionCount,    ///< MISSION_COUNT message expected
         AckMissionItem,     ///< MISSION_ITEM expected
         AckMissionRequest,  ///< MISSION_REQUEST is expected, or MISSION_ACK to end sequence
-        AckGuidedItem,      ///< MISSION_ACK expected in response to ArduPilot guided mode single item send
     } AckType_t;
     
     void _startAckTimeout(AckType_t ack);
-    bool _checkForExpectedAck(AckType_t receivedAck);
+    bool _stopAckTimeout(AckType_t expectedAck);
     void _readTransactionComplete(void);
     void _handleMissionCount(const mavlink_message_t& message);
     void _handleMissionItem(const mavlink_message_t& message);
@@ -98,16 +106,14 @@ private:
     QString _ackTypeToString(AckType_t ackType);
     QString _missionResultToString(MAV_MISSION_RESULT result);
     void _finishTransaction(bool success);
-    void _requestList(void);
-    void _writeMissionCount(void);
 
 private:
     Vehicle*            _vehicle;
     LinkInterface*      _dedicatedLink;
     
     QTimer*             _ackTimeoutTimer;
-    AckType_t           _expectedAck;
-    int                 _retryCount;
+    AckType_t           _retryAck;
+    int                 _requestItemRetryCount;
     
     bool        _readTransactionInProgress;
     bool        _writeTransactionInProgress;

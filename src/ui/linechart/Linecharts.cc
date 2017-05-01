@@ -12,6 +12,8 @@ Linecharts::Linecharts(const QString& title, QAction* action, MAVLinkDecoder* de
     init();
 
     this->setVisible(false);
+
+    this->move(QPoint(100,100));
 }
 
 QWidget* Linecharts::_newVehicleWidget(Vehicle* vehicle, QWidget* parent)

@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -90,10 +103,9 @@ void FileManagerTest::_ackTest(void)
     
     // If the file manager doesn't receive an ack it will timeout and emit an error. So make sure
     // we don't get any error signals.
-    //TODO: FIX
-    //QVERIFY(_fileManager->_sendCmdTestAck());
-    //QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
-    //QVERIFY(_multiSpy->checkNoSignals());
+    QVERIFY(_fileManager->_sendCmdTestAck());
+    QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
+    QVERIFY(_multiSpy->checkNoSignals());
     
     // Setup for no response from ack. This should cause a timeout error
     _fileServer->setErrorMode(MockLinkFileServer::errModeNoResponse);
@@ -235,7 +247,7 @@ void FileManagerTest::_readDownloadTest(void)
             _fileManager->downloadPath(testCase->filename, QDir::temp());
             QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
             
-            // This should be a successful download
+            // This should be a succesful download
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandCompleteSignalMask), true);
             _multiSpy->clearAllSignals();
             
@@ -321,7 +333,7 @@ void FileManagerTest::_streamDownloadTest(void)
             _fileManager->streamPath(testCase->filename, QDir::temp());
             QTest::qWait(_ackTimerTimeoutMsecs); // Let the file manager timeout
             
-            // This should be a successful download
+            // This should be a succesful download
             QCOMPARE(_multiSpy->checkOnlySignalByMask(commandCompleteSignalMask), true);
             _multiSpy->clearAllSignals();
             

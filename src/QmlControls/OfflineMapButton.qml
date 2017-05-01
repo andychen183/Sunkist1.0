@@ -20,8 +20,7 @@ Rectangle
     property bool   checked:    false
     property bool   complete:   false
     property alias  text:       nameLabel.text
-    property int    tiles:      0
-    property string size:       ""
+    property alias  size:       sizeLabel.text
 
     signal clicked()
 
@@ -41,7 +40,6 @@ Rectangle
             horizontalAlignment: Text.AlignRight
             anchors.verticalCenter: parent.verticalCenter
             color:  __showHighlight ? __qgcPal.buttonHighlightText : __qgcPal.buttonText
-            text:   __mapButton.size + (tiles > 0 ? " (" + tiles + " tiles)" : "")
         }
         Item {
             width:  ScreenTools.defaultFontPixelWidth * 2
@@ -62,7 +60,6 @@ Rectangle
         QGCColoredImage {
             width:      sizeLabel.height * 0.8
             height:     sizeLabel.height * 0.8
-            sourceSize.height:  height
             source:     "/res/buttonRight.svg"
             mipmap:     true
             fillMode:   Image.PreserveAspectFit

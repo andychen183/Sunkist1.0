@@ -44,6 +44,9 @@ import android.hardware.usb.*;
 import android.widget.Toast;
 import android.util.Log;
 import android.os.PowerManager;
+
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 //-- Text To Speech
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -68,7 +71,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static TextToSpeech  m_tts;
     private static PowerManager.WakeLock m_wl;
 
-    public static Context m_context;
+    public static WifiInfo currentWifiInfo; //current wifi infomation
 
     private final static UsbIoManager.Listener m_Listener =
             new UsbIoManager.Listener()
@@ -91,10 +94,6 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     private static native void nativeDeviceHasDisconnected(int userDataA);
     private static native void nativeDeviceException(int userDataA, String messageA);
     private static native void nativeDeviceNewData(int userDataA, byte[] dataA);
-
-    // Native C++ functions called to log output
-    public static native void qgcLogDebug(String message);
-    public static native void qgcLogWarning(String message);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     //
@@ -123,6 +122,11 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
         m_tts = new TextToSpeech(this,this);
         PowerManager pm = (PowerManager)m_instance.getSystemService(Context.POWER_SERVICE);
         m_wl = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "QGroundControl");
+
+
+        WifiManager conMan = (WifiManager) m_instance.getSystemService(Context.WIFI_SERVICE);
+        currentWifiInfo = conMan.getConnectionInfo();
+
     }
 
     @Override
@@ -136,8 +140,19 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
     public static void say(String msg)
     {
-        Log.i(TAG, "Say: " + msg);
+        Log.i(TAG, "Say:dd " + msg);
         m_tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    //get current connected wifi info
+    public static String getCurrentWifiSSID()
+    {
+        if(currentWifiInfo != null)
+        {
+            return currentWifiInfo.getSSID();
+        }
+
+        return "noWifi";
     }
 
     public static void keepScreenOn()
@@ -258,7 +273,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                 tempL = tempL + Integer.toString(deviceL.getVendorId()) + ":";
                 listL[countL] = tempL;
                 countL++;
-                qgcLogDebug("Found " + tempL);
+                //Log.i(TAG, "Found " + tempL);
             }
         }
 
@@ -279,13 +294,11 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
     //              calls like close(), read(), and write().
     //
     /////////////////////////////////////////////////////////////////////////////////////////////////
-    public static int open(Context parentContext, String nameA, int userDataA)
+    public static int open(String nameA, int userDataA)
     {
         int idL = BAD_PORT;
 
-        m_context = parentContext;
-
-        //qgcLogDebug("Getting device list");
+        Log.i(TAG, "Getting device list");
         if (!getCurrentDevices())
             return BAD_PORT;
 
@@ -355,7 +368,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
                         Log.e(TAG, "UsbIoManager instance is null");
                     m_ioManager.put(idL, managerL);
                     m_Executor.submit(managerL);
-                    Log.i(TAG, "Port open successful");
+                    Log.i(TAG, "Port open successfull");
                     return idL;
                 }
             }
@@ -374,7 +387,7 @@ public class UsbDeviceJNI extends QtActivity implements TextToSpeech.OnInitListe
 
                 m_ioManager.remove(idL);
             }
-            qgcLogWarning("Port open exception: " + exA.getMessage());
+            Log.e(TAG, "Port open exception");
             return BAD_PORT;
         }
     }

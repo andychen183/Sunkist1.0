@@ -1,12 +1,25 @@
- /****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+ /*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 /**
  * @file
@@ -23,7 +36,6 @@
 #include <QPainter>
 #include <QStyleFactory>
 #include <QAction>
-#include <QStringListModel>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -41,6 +53,7 @@
 #include "LinkManager.h"
 #include "HomePositionManager.h"
 #include "UASMessageHandler.h"
+#include "AutoPilotPluginManager.h"
 #include "QGCTemporaryFile.h"
 #include "QGCPalette.h"
 #include "QGCMapPalette.h"
@@ -48,42 +61,46 @@
 #include "ViewWidgetController.h"
 #include "ParameterEditorController.h"
 #include "CustomCommandWidgetController.h"
+#include "FlightModesComponentController.h"
+#include "APMFlightModesComponentController.h"
+#include "AirframeComponentController.h"
+#include "SensorsComponentController.h"
+#include "APMSensorsComponentController.h"
+#include "PowerComponentController.h"
+#include "RadioComponentController.h"
 #include "ESP8266ComponentController.h"
 #include "ScreenToolsController.h"
-#include "QGCMobileFileDialogController.h"
-#include "RCChannelMonitorController.h"
 #include "AutoPilotPlugin.h"
 #include "VehicleComponent.h"
 #include "FirmwarePluginManager.h"
 #include "MultiVehicleManager.h"
+#include "Generic/GenericFirmwarePlugin.h"
+#include "APM/ArduCopterFirmwarePlugin.h"
+#include "APM/ArduPlaneFirmwarePlugin.h"
+#include "APM/ArduRoverFirmwarePlugin.h"
+#include "APM/APMAirframeComponentController.h"
+#include "PX4/PX4FirmwarePlugin.h"
 #include "Vehicle.h"
 #include "MavlinkQmlSingleton.h"
-#include "JoystickConfigController.h"
 #include "JoystickManager.h"
 #include "QmlObjectListModel.h"
 #include "MissionManager.h"
 #include "QGroundControlQmlGlobal.h"
 #include "HomePositionManager.h"
 #include "FlightMapSettings.h"
+#include "QGCQGeoCoordinate.h"
 #include "CoordinateVector.h"
 #include "MainToolBarController.h"
 #include "MissionController.h"
-#include "GeoFenceController.h"
-#include "RallyPointController.h"
-#include "VideoManager.h"
+#include "MissionCommands.h"
+#include "FlightDisplayViewController.h"
 #include "VideoSurface.h"
 #include "VideoReceiver.h"
 #include "LogDownloadController.h"
+#include "PX4AirframeLoader.h"
 #include "ValuesWidgetController.h"
-#include "AppMessages.h"
-#include "SimulatedPosition.h"
-#include "PositionManager.h"
-#include "FollowMe.h"
-#include "MissionCommandTree.h"
-#include "QGCMapPolygon.h"
-#include "ParameterManager.h"
 
-#ifndef NO_SERIAL_LINK
+#ifndef __ios__
     #include "SerialLink.h"
 #endif
 
@@ -91,8 +108,8 @@
     #include "QGCFileDialog.h"
     #include "QGCMessageBox.h"
     #include "FirmwareUpgradeController.h"
+    #include "JoystickConfigController.h"
     #include "MainWindow.h"
-    #include "GeoTagController.h"
 #endif
 
 #ifdef QGC_RTLAB_ENABLED
@@ -106,15 +123,7 @@
 #endif
 #endif
 
-#include "QGCMapEngine.h"
-
 QGCApplication* QGCApplication::_app = NULL;
-
-const char* QGCApplication::parameterFileExtension =    "params";
-const char* QGCApplication::missionFileExtension =      "mission";
-const char* QGCApplication::fenceFileExtension =        "fence";
-const char* QGCApplication::rallyPointFileExtension =   "rally";
-const char* QGCApplication::telemetryFileExtension =     "tlog";
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
@@ -127,9 +136,6 @@ const char* QGCApplication::_lastKnownHomePositionAltKey    = "LastKnownHomePosi
 
 const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
 const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
-
-// Mavlink status structures for entire app
-mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 
 // Qml Singleton factories
 
@@ -146,7 +152,7 @@ static QObject* mavlinkQmlSingletonFactory(QQmlEngine*, QJSEngine*)
 
 static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    // We create this object as a QGCTool even though it isn't in the toolbox
+    // We create this object as a QGCTool even though it isn't int he toolbox
     QGroundControlQmlGlobal* qmlGlobal = new QGroundControlQmlGlobal(qgcApp());
     qmlGlobal->setToolbox(qgcApp()->toolbox());
 
@@ -177,7 +183,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _styleIsDark(true)
 #endif
     , _fakeMobile(false)
-    , _settingsUpgraded(false)
 #ifdef QT_DEBUG
     , _testHighDPI(false)
 #endif
@@ -193,15 +198,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 #endif
 
-    // Setup for network proxy support
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
         if (getuid() == 0) {
             QMessageBox msgBox;
-            msgBox.setInformativeText("You are running QGroundControl as root. "
+            msgBox.setInformativeText("You are runnning QGroundControl as root. "
                                       "You should not do this since it will cause other issues with QGroundControl. "
                                       "QGroundControl will now exit. "
                                       "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
@@ -255,6 +257,73 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
     ParseCmdLineOptions(argc, argv, rgCmdLineOptions, sizeof(rgCmdLineOptions)/sizeof(rgCmdLineOptions[0]), false);
 
+#ifdef __mobile__
+    QLoggingCategory::setFilterRules(QStringLiteral("*Log.debug=false"));
+#else
+    QString filterRules;
+
+    // Turn off bogus ssl warning
+    filterRules += "qt.network.ssl.warning=false\n";
+
+    if (logging) {
+        QStringList logList = loggingOptions.split(",");
+
+        if (logList[0] == "full") {
+            filterRules += "*Log.debug=true\n";
+            for(int i=1; i<logList.count(); i++) {
+                filterRules += logList[i];
+                filterRules += ".debug=false\n";
+            }
+        } else {
+            foreach(const QString &rule, logList) {
+                filterRules += rule;
+                filterRules += ".debug=true\n";
+            }
+        }
+    } else {
+        // First thing we want to do is set up the qtlogging.ini file. If it doesn't already exist we copy
+        // it to the correct location. This way default debug builds will have logging turned off.
+
+        static const char* qtProjectDir = "QtProject";
+        static const char* qtLoggingFile = "qtlogging.ini";
+        bool loggingDirectoryOk = false;
+
+        QDir iniFileLocation(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+        if (!iniFileLocation.cd(qtProjectDir)) {
+            if (!iniFileLocation.mkdir(qtProjectDir)) {
+                qDebug() << "Unable to create qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);
+            } else {
+                if (!iniFileLocation.cd(qtProjectDir)) {
+                    qDebug() << "Unable to access qtlogging.ini directory" << iniFileLocation.filePath(qtProjectDir);;
+                }
+                loggingDirectoryOk = true;
+            }
+        } else {
+            loggingDirectoryOk = true;
+        }
+
+        if (loggingDirectoryOk) {
+            qDebug () << "Logging ini file directory" << iniFileLocation.absolutePath();
+            if (!iniFileLocation.exists(qtLoggingFile)) {
+                QFile loggingFile(iniFileLocation.filePath(qtLoggingFile));
+                if (loggingFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                    QTextStream out(&loggingFile);
+                    out << "[Rules]\n";
+                    out << "*Log.debug=false\n";
+                    foreach(const QString &category, QGCLoggingCategoryRegister::instance()->registeredCategories()) {
+                        out << category << ".debug=false\n";
+                    }
+                } else {
+                    qDebug() << "Unable to create logging file" << QString(qtLoggingFile) << "in" << iniFileLocation;
+                }
+            }
+        }
+    }
+
+    qDebug() << "Filter rules" << filterRules;
+    QLoggingCategory::setFilterRules(filterRules);
+#endif
+
     // Set up timer for delayed missing fact display
     _missingParamsDelayedDisplayTimer.setSingleShot(true);
     _missingParamsDelayedDisplayTimer.setInterval(_missingParamsDelayedDisplayTimerTimeout);
@@ -271,7 +340,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationName(QGC_ORG_NAME);
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
-    this->setApplicationVersion(QString(GIT_VERSION));
+    QString versionString(GIT_TAG);
+    // stable versions are on tags (v1.2.3)
+    // development versions are full git describe versions (v1.2.3-18-g879e8b3)
+    if (versionString.length() > 8) {
+        versionString.append(" (Development)");
+    }
+    this->setApplicationVersion(versionString);
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -297,27 +372,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         settings.clear();
         settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
 
-        // Clear parameter cache
-        QDir paramDir(ParameterManager::parameterCacheDir());
+        QFile::remove(PX4AirframeLoader::aiframeMetaDataFile());
+        QFile::remove(PX4ParameterMetaData::parameterMetaDataFile());
+        QDir paramDir(ParameterLoader::parameterCacheDir());
         paramDir.removeRecursively();
         paramDir.mkpath(paramDir.absolutePath());
-    } else {
-        // Determine if upgrade message for settings version bump is required. Check must happen before toolbox is started since
-        // that will write some settings.
-        if (settings.contains(_settingsVersionKey)) {
-            if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
-                _settingsUpgraded = true;
-            }
-        } else if (settings.allKeys().count()) {
-            // Settings version key is missing and there are settings. This is an upgrade scenario.
-            _settingsUpgraded = true;
-        } else {
-            settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        }
     }
-
-    // Set up our logging filters
-    QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
 
     _lastKnownHomePosition.setLatitude(settings.value(_lastKnownHomePositionLatKey, 37.803784).toDouble());
     _lastKnownHomePosition.setLongitude(settings.value(_lastKnownHomePositionLonKey, -122.462276).toDouble());
@@ -336,7 +396,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     initializeVideoStreaming(argc, argv);
 
     _toolbox = new QGCToolbox(this);
-    _toolbox->setChildToolboxes();
 }
 
 QGCApplication::~QGCApplication()
@@ -361,45 +420,70 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<QGCMapPalette>  ("QGroundControl.Palette", 1, 0, "QGCMapPalette");
 
     qmlRegisterUncreatableType<CoordinateVector>    ("QGroundControl",                  1, 0, "CoordinateVector",       "Reference only");
+    qmlRegisterUncreatableType<MissionCommands>     ("QGroundControl",                  1, 0, "MissionCommands",        "Reference only");
+    qmlRegisterUncreatableType<QGCQGeoCoordinate>   ("QGroundControl",                  1, 0, "QGCQGeoCoordinate",      "Reference only");
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                  1, 0, "QmlObjectListModel",     "Reference only");
     qmlRegisterUncreatableType<VideoReceiver>       ("QGroundControl",                  1, 0, "VideoReceiver",          "Reference only");
     qmlRegisterUncreatableType<VideoSurface>        ("QGroundControl",                  1, 0, "VideoSurface",           "Reference only");
-    qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                  1, 0, "MissionCommandTree",     "Reference only");
 
-    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",        "Reference only");
-    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",      1, 0, "VehicleComponent",       "Reference only");
-    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",              1, 0, "Vehicle",                "Reference only");
-    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",              1, 0, "MissionItem",            "Reference only");
-    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",              1, 0, "MissionManager",         "Reference only");
-    qmlRegisterUncreatableType<ParameterManager>    ("QGroundControl.Vehicle",              1, 0, "ParameterManager",       "Reference only");
-    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",        "Reference only");
-    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
-    qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
-    qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",          "Reference only");
+    qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",  1, 0, "AutoPilotPlugin",        "Reference only");
+    qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",  1, 0, "VehicleComponent",       "Reference only");
+    qmlRegisterUncreatableType<Vehicle>             ("QGroundControl.Vehicle",          1, 0, "Vehicle",                "Reference only");
+    qmlRegisterUncreatableType<MissionItem>         ("QGroundControl.Vehicle",          1, 0, "MissionItem",            "Reference only");
+    qmlRegisterUncreatableType<MissionManager>      ("QGroundControl.Vehicle",          1, 0, "MissionManager",         "Reference only");
+    qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",  1, 0, "JoystickManager",        "Reference only");
+    qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",  1, 0, "Joystick",               "Reference only");
 
     qmlRegisterType<ParameterEditorController>          ("QGroundControl.Controllers", 1, 0, "ParameterEditorController");
+    qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
+    qmlRegisterType<FlightModesComponentController>     ("QGroundControl.Controllers", 1, 0, "FlightModesComponentController");
+    qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
+    qmlRegisterType<AirframeComponentController>        ("QGroundControl.Controllers", 1, 0, "AirframeComponentController");
+    qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
+    qmlRegisterType<SensorsComponentController>         ("QGroundControl.Controllers", 1, 0, "SensorsComponentController");
+    qmlRegisterType<PowerComponentController>           ("QGroundControl.Controllers", 1, 0, "PowerComponentController");
+    qmlRegisterType<RadioComponentController>           ("QGroundControl.Controllers", 1, 0, "RadioComponentController");
     qmlRegisterType<ESP8266ComponentController>         ("QGroundControl.Controllers", 1, 0, "ESP8266ComponentController");
     qmlRegisterType<ScreenToolsController>              ("QGroundControl.Controllers", 1, 0, "ScreenToolsController");
     qmlRegisterType<MainToolBarController>              ("QGroundControl.Controllers", 1, 0, "MainToolBarController");
     qmlRegisterType<MissionController>                  ("QGroundControl.Controllers", 1, 0, "MissionController");
-    qmlRegisterType<GeoFenceController>                 ("QGroundControl.Controllers", 1, 0, "GeoFenceController");
-    qmlRegisterType<RallyPointController>               ("QGroundControl.Controllers", 1, 0, "RallyPointController");
+    qmlRegisterType<FlightDisplayViewController>        ("QGroundControl.Controllers", 1, 0, "FlightDisplayViewController");
     qmlRegisterType<ValuesWidgetController>             ("QGroundControl.Controllers", 1, 0, "ValuesWidgetController");
-    qmlRegisterType<QGCMobileFileDialogController>      ("QGroundControl.Controllers", 1, 0, "QGCMobileFileDialogController");
-    qmlRegisterType<RCChannelMonitorController>         ("QGroundControl.Controllers", 1, 0, "RCChannelMonitorController");
-    qmlRegisterType<JoystickConfigController>           ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
+
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
     qmlRegisterType<FirmwareUpgradeController>      ("QGroundControl.Controllers", 1, 0, "FirmwareUpgradeController");
+    qmlRegisterType<JoystickConfigController>       ("QGroundControl.Controllers", 1, 0, "JoystickConfigController");
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
-    qmlRegisterType<GeoTagController>               ("QGroundControl.Controllers", 1, 0, "GeoTagController");
 #endif
 
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
     qmlRegisterSingletonType<MavlinkQmlSingleton>       ("QGroundControl.Mavlink",                  1, 0, "Mavlink",                mavlinkQmlSingletonFactory);
+
+    // Show user an upgrade message if the settings version has been bumped up
+    bool settingsUpgraded = false;
+    if (settings.contains(_settingsVersionKey)) {
+        if (settings.value(_settingsVersionKey).toInt() != QGC_SETTINGS_VERSION) {
+            settingsUpgraded = true;
+        }
+    } else if (settings.allKeys().count()) {
+        // Settings version key is missing and there are settings. This is an upgrade scenario.
+        settingsUpgraded = true;
+    } else {
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+    }
+
+    if (settingsUpgraded) {
+        settings.clear();
+        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+        showMessage("The format for QGroundControl saved settings has been modified. "
+                    "Your saved settings have been reset to defaults.");
+    }
+
+    settings.sync();
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)
@@ -415,8 +499,8 @@ bool QGCApplication::_initForNormalAppBoot(void)
 #ifdef __mobile__
     _qmlAppEngine = new QQmlApplicationEngine(this);
     _qmlAppEngine->addImportPath("qrc:/qml");
+    _qmlAppEngine->rootContext()->setContextProperty("multiVehicleManager", toolbox()->multiVehicleManager());
     _qmlAppEngine->rootContext()->setContextProperty("joystickManager", toolbox()->joystickManager());
-    _qmlAppEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     _qmlAppEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
 #else
     // Start the user interface
@@ -431,19 +515,6 @@ bool QGCApplication::_initForNormalAppBoot(void)
     // Load known link configurations
     toolbox()->linkManager()->loadLinkConfigurationList();
 
-    if (_settingsUpgraded) {
-        settings.clear();
-        settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
-        showMessage("The format for QGroundControl saved settings has been modified. "
-                    "Your saved settings have been reset to defaults.");
-    }
-
-    if (getQGCMapEngine()->wasCacheReset()) {
-        showMessage("The Offline Map Cache database has been upgraded. "
-                    "Your old map cache sets have been reset.");
-    }
-
-    settings.sync();
     return true;
 }
 
@@ -563,7 +634,7 @@ void QGCApplication::setStyle(bool styleIsDark)
     emit styleChanged(_styleIsDark);
 }
 
-void QGCApplication::_loadCurrentStyle()
+void QGCApplication::_loadCurrentStyle(void)
 {
 #ifndef __mobile__
     bool success = true;
@@ -580,12 +651,13 @@ void QGCApplication::_loadCurrentStyle()
     }
 
     if (success && !_styleIsDark) {
+        qDebug() << "LOADING LIGHT";
         // Load the slave light stylesheet.
         QFile styleSheet(_lightStyleFile);
         if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
             styles += styleSheet.readAll();
         } else {
-            qWarning() << "Unable to load slave light sheet:";
+            qDebug() << "Unable to load slave light sheet:";
             success = false;
         }
     }
@@ -625,7 +697,7 @@ void QGCApplication::_missingParamsDisplay(void)
     showMessage(QString("Parameters missing from firmware: %1. You may be running an older version of firmware QGC does not work correctly with or your firmware has a bug in it.").arg(params));
 }
 
-QObject* QGCApplication::_rootQmlObject()
+QObject* QGCApplication::_rootQmlObject(void)
 {
 #ifdef __mobile__
     return _qmlAppEngine->rootObjects()[0];
@@ -646,11 +718,6 @@ QObject* QGCApplication::_rootQmlObject()
 
 void QGCApplication::showMessage(const QString& message)
 {
-    // Special case hack for ArduPilot prearm messages. These show up in the center of the map, so no need for popup.
-    if (message.contains("PreArm:")) {
-        return;
-    }
-
     QObject* rootQmlObject = _rootQmlObject();
 
     if (rootQmlObject) {
@@ -668,6 +735,16 @@ void QGCApplication::showMessage(const QString& message)
     }
 }
 
+void QGCApplication::showFlyView(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showFlyView");
+}
+
+void QGCApplication::showPlanView(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showPlanView");
+}
+
 void QGCApplication::showSetupView(void)
 {
     QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
@@ -678,6 +755,29 @@ void QGCApplication::qmlAttemptWindowClose(void)
     QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
 }
 
+
+void QGCApplication::_showSetupFirmware(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupFirmware");
+}
+
+void QGCApplication::_showSetupParameters(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupParameters");
+}
+
+void QGCApplication::_showSetupSummary(void)
+{
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupSummary");
+}
+
+void QGCApplication::_showSetupVehicleComponent(VehicleComponent* vehicleComponent)
+{
+    QVariant varReturn;
+    QVariant varComponent = QVariant::fromValue(vehicleComponent);
+
+    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupVehicleComponent", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varComponent));
+}
 
 void QGCApplication::setLastKnownHomePosition(QGeoCoordinate& lastKnownHomePosition)
 {

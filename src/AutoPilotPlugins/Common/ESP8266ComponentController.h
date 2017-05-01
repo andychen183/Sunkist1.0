@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009, 2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 
 /// @file
@@ -32,59 +45,67 @@ namespace Ui {
 class ESP8266ComponentController : public FactPanelController
 {
     Q_OBJECT
-
+    
 public:
     ESP8266ComponentController      ();
     ~ESP8266ComponentController     ();
 
-    Q_PROPERTY(int              componentID     READ componentID                                    CONSTANT)
-    Q_PROPERTY(QString          version         READ version                                        NOTIFY versionChanged)
-    Q_PROPERTY(QString          wifiIPAddress   READ wifiIPAddress                                  CONSTANT)
-    Q_PROPERTY(QString          wifiSSID        READ wifiSSID           WRITE setWifiSSID           NOTIFY wifiSSIDChanged)
-    Q_PROPERTY(QString          wifiPassword    READ wifiPassword       WRITE setWifiPassword       NOTIFY wifiPasswordChanged)
-    Q_PROPERTY(QString          wifiSSIDSta     READ wifiSSIDSta        WRITE setWifiSSIDSta        NOTIFY wifiSSIDStaChanged)
-    Q_PROPERTY(QString          wifiPasswordSta READ wifiPasswordSta    WRITE setWifiPasswordSta    NOTIFY wifiPasswordStaChanged)
-    Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                                   CONSTANT)
-    Q_PROPERTY(QStringList      baudRates       READ baudRates                                      CONSTANT)
-    Q_PROPERTY(int              baudIndex       READ baudIndex          WRITE setBaudIndex          NOTIFY baudIndexChanged)
-    Q_PROPERTY(bool             busy            READ busy                                           NOTIFY busyChanged)
-    Q_PROPERTY(Vehicle*         vehicle         READ vehicle                                        CONSTANT)
+    Q_PROPERTY(int              componentID     READ componentID                            CONSTANT)
+    Q_PROPERTY(QString          version         READ version                                NOTIFY versionChanged)
+    Q_PROPERTY(QString          wifiSSID        READ wifiSSID       WRITE setWifiSSID       NOTIFY wifiSSIDChanged)
+    Q_PROPERTY(QString          wifiPassword    READ wifiPassword   WRITE setWifiPassword   NOTIFY wifiPasswordChanged)
+    Q_PROPERTY(QString          wifiStaSSID     READ wifiStaSSID    WRITE setWifiStaSSID    NOTIFY wifiStaSSIDChanged)
+    Q_PROPERTY(QString          wifiStaPassword READ wifiStaPassword WRITE setWifiStaPassword NOTIFY wifiStaPasswordChanged)
+    Q_PROPERTY(QStringList      wifiChannels    READ wifiChannels                           CONSTANT)
+    Q_PROPERTY(QStringList      baudRates       READ baudRates                              CONSTANT)
+    Q_PROPERTY(int              baudIndex       READ baudIndex      WRITE setBaudIndex      NOTIFY baudIndexChanged)
+    Q_PROPERTY(QStringList      modeSelect      READ modeSelect                              CONSTANT)
+    Q_PROPERTY(int              modeIndex       READ modeIndex      WRITE setModeIndex      NOTIFY modeIndexChanged)
+    Q_PROPERTY(bool             busy            READ busy                                   NOTIFY busyChanged)
+    Q_PROPERTY(Vehicle*         vehicle         READ vehicle        CONSTANT)
 
     Q_INVOKABLE void restoreDefaults();
     Q_INVOKABLE void reboot         ();
 
     int             componentID     () { return MAV_COMP_ID_UDP_BRIDGE; }
     QString         version         ();
-    QString         wifiIPAddress   ();
     QString         wifiSSID        ();
     QString         wifiPassword    ();
-    QString         wifiSSIDSta     ();
-    QString         wifiPasswordSta ();
+    QString         wifiStaSSID     ();
+    QString         wifiStaPassword ();
     QStringList     wifiChannels    () { return _channels; }
     QStringList     baudRates       () { return _baudRates; }
     int             baudIndex       ();
+    QStringList     modeSelect      () { return _modeSelect;}
+    int             modeIndex       ();
     bool            busy            () { return _waitType != WAIT_FOR_NOTHING; }
     Vehicle*        vehicle         () { return _vehicle; }
 
     void        setWifiSSID         (QString id);
     void        setWifiPassword     (QString pwd);
-    void        setWifiSSIDSta      (QString id);
-    void        setWifiPasswordSta  (QString pwd);
+    void        setWifiStaSSID      (QString idsta);
+    void        setWifiStaPassword  (QString pwdsta);
     void        setBaudIndex        (int idx);
+    void        setModeIndex        (int idx);
 
 signals:
-    void        versionChanged          ();
-    void        wifiSSIDChanged         ();
-    void        wifiPasswordChanged     ();
-    void        wifiSSIDStaChanged      ();
-    void        wifiPasswordStaChanged  ();
-    void        baudIndexChanged        ();
-    void        busyChanged             ();
+    void        versionChanged      ();
+    void        wifiSSIDChanged     ();
+    void        wifiPasswordChanged ();
+    void        wifiStaSSIDChanged     ();
+    void        wifiStaPasswordChanged ();
+    void        modeIndexChanged    ();
+    void        baudIndexChanged    ();
+    void        busyChanged         ();
 
 private slots:
-    void        _mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
+    void        _processTimeout     ();
+    void        _commandAck         (UASInterface* uas, uint8_t compID, uint16_t command, uint8_t result);
     void        _ssidChanged        (QVariant value);
     void        _passwordChanged    (QVariant value);
+    void        _ssidStaChanged     (QVariant value);
+    void        _passwordStaChanged (QVariant value);
+    void        _modeChanged        (QVariant value);
     void        _baudChanged        (QVariant value);
     void        _versionChanged     (QVariant value);
 
@@ -93,9 +114,10 @@ private:
     void        _restoreDefaults    ();
 
 private:
+    QTimer      _timer;
     QStringList _channels;
+    QStringList _modeSelect;
     QStringList _baudRates;
-    QString     _ipAddress;
 
     enum {
         WAIT_FOR_NOTHING,

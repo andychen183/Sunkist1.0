@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -45,8 +58,7 @@ public:
     
     Q_PROPERTY(QmlObjectListModel* airframeTypesModel MEMBER _airframeTypesModel CONSTANT)
     Q_PROPERTY(APMAirframeType* currentAirframeType READ currentAirframeType WRITE setCurrentAirframeType NOTIFY currentAirframeTypeChanged)
-
-    Q_INVOKABLE void loadParameters(const QString& paramFile);
+    Q_PROPERTY(APMAirframe* currentAirframe READ currentAirframe WRITE setCurrentAirframe NOTIFY currentAirframeChanged)
 
     int currentAirframeIndex(void);
     void setCurrentAirframeIndex(int newIndex);
@@ -54,25 +66,24 @@ public:
 signals:
     void loadAirframesCompleted();
     void currentAirframeTypeChanged(APMAirframeType* airframeType);
+    void currentAirframeChanged(APMAirframe* airframe);
 
 public slots:
     APMAirframeType *currentAirframeType() const;
-    Q_INVOKABLE QString currentAirframeTypeName() const;
+    APMAirframe *currentAirframe() const;
     void setCurrentAirframeType(APMAirframeType *t);
+    void setCurrentAirframe(APMAirframe *t);
 
 private slots:
     void _fillAirFrames(void);
+    void _finishVehicleSetup(void);
     void _factFrameChanged(QVariant v);
-    void _githubJsonDownloadFinished(QString remoteFile, QString localFile);
-    void _githubJsonDownloadError(QString errorMsg);
-    void _paramFileDownloadFinished(QString remoteFile, QString localFile);
-    void _paramFileDownloadError(QString errorMsg);
 
 private:
-    void _loadParametersFromDownloadFile(const QString& downloadedParamFile);
-
     static bool _typesRegistered;
     APMAirframeType *_currentAirframeType;
+    APMAirframe *_currentAirframe;
+    int _waitParamWriteSignalCount;
     QmlObjectListModel *_airframeTypesModel;
 };
 

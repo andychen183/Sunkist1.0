@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -16,21 +29,15 @@
 
 #include "VideoReceiver.h"
 #include <QDebug>
-#include <QUrl>
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
 #if defined(QGC_GST_STREAMING)
     , _pipeline(NULL)
     , _videoSink(NULL)
-    , _socket(NULL)
-    , _serverPresent(false)
 #endif
 {
-#if defined(QGC_GST_STREAMING)
-    _timer.setSingleShot(true);
-    connect(&_timer, &QTimer::timeout, this, &VideoReceiver::_timeout);
-#endif
+
 }
 
 VideoReceiver::~VideoReceiver()
@@ -38,9 +45,6 @@ VideoReceiver::~VideoReceiver()
 #if defined(QGC_GST_STREAMING)
     stop();
     setVideoSink(NULL);
-    if(_socket) {
-        delete _socket;
-    }
 #endif
 }
 
@@ -58,68 +62,6 @@ void VideoReceiver::setVideoSink(GstElement* sink)
 }
 #endif
 
-#if defined(QGC_GST_STREAMING)
-static void newPadCB(GstElement * element, GstPad* pad, gpointer data)
-{
-    gchar *name;
-    name = gst_pad_get_name(pad);
-    g_print("A new pad %s was created\n", name);
-    GstCaps * p_caps = gst_pad_get_pad_template_caps (pad);
-    gchar * description = gst_caps_to_string(p_caps);
-    qDebug() << p_caps << ", " << description;
-    g_free(description);
-    GstElement * p_rtph264depay = GST_ELEMENT(data);
-    if(gst_element_link_pads(element, name, p_rtph264depay, "sink") == false)
-        qCritical() << "newPadCB : failed to link elements\n";
-    g_free(name);
-}
-#endif
-
-#if defined(QGC_GST_STREAMING)
-void VideoReceiver::_connected()
-{
-    //-- Server showed up. Now we start the stream.
-    _timer.stop();
-    delete _socket;
-    _socket = NULL;
-    _serverPresent = true;
-    start();
-}
-#endif
-
-#if defined(QGC_GST_STREAMING)
-void VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
-{
-    Q_UNUSED(socketError);
-    delete _socket;
-    _socket = NULL;
-    //-- Try again in 5 seconds
-    _timer.start(5000);
-}
-#endif
-
-#if defined(QGC_GST_STREAMING)
-void VideoReceiver::_timeout()
-{
-    //-- If socket is live, we got no connection nor a socket error
-    if(_socket) {
-        delete _socket;
-        _socket = NULL;
-    }
-    //-- RTSP will try to connect to the server. If it cannot connect,
-    //   it will simply give up and never try again. Instead, we keep
-    //   attempting a connection on this timer. Once a connection is
-    //   found to be working, only then we actually start the stream.
-    QUrl url(_uri);
-    _socket = new QTcpSocket;
-    connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
-    connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
-    //qDebug() << "Trying to connect to:" << url.host() << url.port();
-    _socket->connectToHost(url.host(), url.port());
-    _timer.start(5000);
-}
-#endif
-
 void VideoReceiver::start()
 {
 #if defined(QGC_GST_STREAMING)
@@ -127,20 +69,13 @@ void VideoReceiver::start()
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
     }
+
     if (_videoSink == NULL) {
         qCritical() << "VideoReceiver::start() failed because video sink is not set";
         return;
     }
 
-    bool isUdp = _uri.contains("udp://");
-
     stop();
-
-    //-- For RTSP, check to see if server is there first
-    if(!_serverPresent && !isUdp) {
-        _timer.start(100);
-        return;
-    }
 
     bool running = false;
 
@@ -156,34 +91,21 @@ void VideoReceiver::start()
             break;
         }
 
-        if(isUdp) {
-            dataSource = gst_element_factory_make("udpsrc", "udp-source");
-        } else {
-            dataSource = gst_element_factory_make("rtspsrc", "rtsp-source");
-        }
-
-        if (!dataSource) {
-            qCritical() << "VideoReceiver::start() failed. Error with data source for gst_element_factory_make()";
+        if ((dataSource = gst_element_factory_make("udpsrc", "udp-source")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('udpsrc')";
             break;
         }
 
-        if(isUdp) {
-            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == NULL) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
-                break;
-            }
-            g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
-        } else {
-            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 0, "udp-reconnect", 1, "timeout", 5000000, NULL);
+        if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
+            break;
         }
+
+        g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, NULL);
 
         if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == NULL) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
             break;
-        }
-
-        if(!isUdp) {
-            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == NULL) {
@@ -198,15 +120,7 @@ void VideoReceiver::start()
 
         gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, decoder, _videoSink, NULL);
 
-        gboolean res = FALSE;
-
-        if(isUdp) {
-            res = gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL);
-        } else {
-            res = gst_element_link_many(demux, parser, decoder, _videoSink, NULL);
-        }
-
-        if (!res) {
+        if (gst_element_link_many(dataSource, demux, parser, decoder, _videoSink, NULL) != (gboolean)TRUE) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_link_many()";
             break;
         }
@@ -268,7 +182,6 @@ void VideoReceiver::stop()
         gst_element_set_state(_pipeline, GST_STATE_NULL);
         gst_object_unref(_pipeline);
         _pipeline = NULL;
-        _serverPresent = false;
     }
 #endif
 }

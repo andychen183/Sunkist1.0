@@ -1,6 +1,4 @@
 {
-    "comment":  "Any Firmware, Any Vehicle",
-
     "version": 1,
 
     "mavCmdInfo": [
@@ -34,27 +32,9 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "secs",
+                "units":            "seconds",
                 "default":          0,
                 "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "Acceptance:",
-                "units":            "m",
-                "default":          3,
-                "decimalPlaces":    2
-            },
-            "param3": {
-                "label":            "PassThru:",
-                "units":            "m",
-                "default":          0,
-                "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Heading:",
-                "units":            "radians",
-                "default":          0.0,
-                "decimalPlaces":    2
             }
         },
         {
@@ -67,8 +47,8 @@
             "category":             "Loiter",
             "param3": {
                 "label":            "Radius:",
-                "units":            "m",
-                "default":          50.0,
+                "units":            "meters",
+                "default":          10.0,
                 "decimalPlaces":    2
             }
         },
@@ -87,16 +67,9 @@
             },
             "param3": {
                 "label":            "Radius:",
-                "units":            "m",
-                "default":          50.0,
+                "units":            "meters",
+                "default":          10.0,
                 "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
             }
         },
         {
@@ -109,22 +82,15 @@
             "category":             "Loiter",
             "param1": {
                 "label":            "Hold:",
-                "units":            "secs",
+                "units":            "seconds",
                 "default":          30,
                 "decimalPlaces":    0
             },
             "param3": {
                 "label":            "Radius:",
-                "units":            "m",
-                "default":          50.0,
+                "units":            "meters",
+                "default":          10.0,
                 "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
             }
         },
         {
@@ -145,13 +111,19 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Abort Alt:",
-                "units":            "m",
+                "units":            "meters",
                 "default":          25.0,
-                "decimalPlaces":    2
+                "decimalPlaces":    3
             },
             "param4": {
                 "label":            "Heading:",
                 "units":            "radians",
+                "default":          0.0,
+                "decimalPlaces":    2
+            },
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -166,7 +138,7 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Pitch:",
-                "units":            "deg",
+                "units":            "degrees",
                 "default":          15,
                 "decimalPlaces":    2
             },
@@ -177,9 +149,9 @@
                 "decimalPlaces":    2
             }
         },
-        { "id": 23, "rawName": "MAV_CMD_NAV_LAND_LOCAL", "friendlyName": "Land local" },
-        { "id": 24, "rawName": "MAV_CMD_NAV_TAKEOFF_LOCAL", "friendlyName": "Takeoff local" },
-        { "id": 25, "rawName": "MAV_CMD_NAV_FOLLOW", "friendlyName": "Nav follow" },
+        { "id": 23, "rawName": "MAV_CMD_NAV_LAND_LOCAL", "friendlyName": "MAV_CMD_NAV_LAND_LOCAL" },
+        { "id": 24, "rawName": "MAV_CMD_NAV_TAKEOFF_LOCAL", "friendlyName": "MAV_CMD_NAV_TAKEOFF_LOCAL" },
+        { "id": 25, "rawName": "MAV_CMD_NAV_FOLLOW", "friendlyName": "MAV_CMD_NAV_FOLLOW" },
         {
             "id":                    30,
             "rawName":              "MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT",
@@ -197,7 +169,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "m",
+                "units":            "meters",
                 "default":          55,
                 "decimalPlaces":    2
             }
@@ -219,20 +191,11 @@
             },
             "param2": {
                 "label":            "Radius:",
-                "units":            "m",
-                "default":          50.0,
+                "units":            "meters",
+                "default":          10.0,
                 "decimalPlaces":    2
-            },
-            "param4": {
-                "label":            "Next waypoint start:",
-                "enumStrings":      "Center,On Loiter",
-                "enumValues":       "0,1",
-                "default":          1,
-                "decimalPlaces":    0
             }
         },
-        { "id": 32, "rawName": "MAV_CMD_DO_FOLLOW", "friendlyName": "Follow Me" },
-        { "id": 33, "rawName": "MAV_CMD_DO_FOLLOW_REPOSITION", "friendlyName": "Vehicle reposition" },
         {
             "id":                   80,
             "rawName":              "MAV_CMD_NAV_ROI",
@@ -285,7 +248,7 @@
             "param4": {
                 "label":            "Heading goal:",
                 "default":          0,
-                "units":            "deg",
+                "units":            "degrees",
                 "decimalPlaces":    2
             }
         },
@@ -299,23 +262,23 @@
             "category":             "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "secs",
+                "units":            "seconds",
                 "default":          0,
                 "decimalPlaces":    0
-            }        
+            }
         },
-        { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "Altitude wait" },
+        { "id": 83, "rawName": "MAV_CMD_NAV_ALTITUDE_WAIT", "friendlyName": "MAV_CMD_NAV_ALTITUDE_WAIT" },
         {
             "id":                   84,
             "rawName":              "MAV_CMD_NAV_VTOL_TAKEOFF",
-            "friendlyName":         "VTOL takeoff and transition",
-            "description":          "Takeoff in VTOL mode, transition to forward flight and fly to the specified location.",
+            "friendlyName":         "VTOL takeoff",
+            "description":          "Takeoff from ground using VTOL mode.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
             "param4": {
                 "label":            "Heading:",
-                "units":            "deg",
+                "units":            "degrees",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -323,14 +286,20 @@
         {
             "id":                   85,
             "rawName":              "MAV_CMD_NAV_VTOL_LAND",
-            "friendlyName":         "VTOL transition and land",
-            "description":          "Transition to VTOL mode and land.",
+            "friendlyName":         "VTOL land",
+            "description":          "Land using VTOL mode.",
             "specifiesCoordinate":  true,
             "friendlyEdit":         true,
             "category":             "VTOL",
             "param4": {
                 "label":            "Heading:",
-                "units":            "deg",
+                "units":            "degrees",
+                "default":          0.0,
+                "decimalPlaces":    2
+            },
+            "param7": {
+                "label":            "Altitude:",
+                "units":            "meters",
                 "default":          0.0,
                 "decimalPlaces":    2
             }
@@ -341,37 +310,8 @@
             "friendlyName": "Guided enable",
             "description":  "Enable/Disabled guided mode.",
             "param1": {
-                "label":            "Enable",
-                "enumStrings":      "Disable,Enable",
-                "enumValues":       "0,1",
+                "label":            "Enable:",
                 "default":          1,
-                "decimalPlaces":    0
-            }
-        },
-        {
-            "id":           94,
-            "rawName":      "MAV_CMD_NAV_DELAY",
-            "friendlyName": "Delay until",
-            "description":  "Delay unti the specified time is reached.",
-            "param1": {
-                "label":            "Hold:",
-                "units":            "secs",
-                "default":          30,
-                "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "Hour (utc):",
-                "default":          0,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "Min (utc):",
-                "default":          0,
-                "decimalPlaces":    0
-            },
-            "param4": {
-                "label":            "Sec (utc):",
-                "default":          0,
                 "decimalPlaces":    0
             }
         },
@@ -384,7 +324,7 @@
             "category":     "Basic",
             "param1": {
                 "label":            "Hold:",
-                "units":            "secs",
+                "units":            "seconds",
                 "default":          30,
                 "decimalPlaces":    0
             }
@@ -403,7 +343,7 @@
             },
             "param7": {
                 "label":            "Altitude:",
-                "units":            "m",
+                "units":            "meters",
                 "default":          55,
                 "decimalPlaces":    2
             }
@@ -416,8 +356,8 @@
             "category":     "Conditionals",
             "param1": {
                 "label":            "Distance:",
-                "units":            "m",
-                "default":          10,
+                "units":            "meters",
+                "default":          0,
                 "decimalPlaces":    2
             }
         },
@@ -429,7 +369,7 @@
             "category":     "Conditionals",
             "param1": {
                 "label":            "Heading:",
-                "units":            "deg",
+                "units":            "degrees",
                 "default":          0,
                 "decimalPlaces":    1
             },
@@ -441,47 +381,25 @@
             },
             "param3": {
                 "label":            "Direction:",
-                "enumStrings":      "Clockwise,Counter-Clockwise",
-                "enumValues":       "1,-1",
-                "default":          1
-            },
-            "param4": {
-                "label":            "Offset:",
-                "enumStrings":      "Relative,Absolute",
-                "enumValues":       "1,0",
-                "default":          1
-            }
-        },
-        { "id": 176, "rawName": "MAV_CMD_DO_SET_MODE", "friendlyName": "Set mode" },
-        {
-            "id":           176,
-            "rawName":      "MAV_CMD_DO_SET_MODE",
-            "friendlyName": "Set flight mode",
-            "description":  "Set flight mode.",
-            "category":     "Advanced",
-            "param1": {
-                "label":            "Mode:",
-                "default":          0,
-                "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "Custom Mode:",
-                "default":          0,
+                "default":          1,
                 "decimalPlaces":    0
             },
             "param3": {
-                "label":            "Sub Mode:",
-                "default":          0,
-                "decimalPlaces":    0
+                "label":            "Offset:",
+                "enumStrings":      "Relative,Absolute",
+                "enumValues":       "1,0",
+                "default":          5
             }
         },
+        { "id": 159, "rawName": "MAV_CMD_CONDITION_LAST", "friendlyName": "MAV_CMD_CONDITION_LAST" },
+        { "id": 176, "rawName": "MAV_CMD_DO_SET_MODE", "friendlyName": "MAV_CMD_DO_SET_MODE" },
         {
             "id":           177,
             "rawName":      "MAV_CMD_DO_JUMP",
             "friendlyName": "Jump to item",
             "description":  "Mission will continue at the specified item.",
             "friendlyEdit": true,
-            "category":     "Advanced",
+            "category":     "Basic",
             "param1": {
                 "label":            "Item #:",
                 "default":          1,
@@ -489,7 +407,7 @@
             },
             "param2": {
                 "label":            "Repeat:",
-                "default":          10,
+                "default":          0,
                 "decimalPlaces":    0
             }
         },
@@ -514,12 +432,6 @@
                 "label":            "Throttle:",
                 "units":            "%",
                 "default":          -1
-            },
-            "param4": {
-                "label":            "Offset:",
-                "enumStrings":      "Relative,Absolute",
-                "enumValues":       "1,0",
-                "default":          1
             }
         },
         {
@@ -535,10 +447,11 @@
                 "label":            "Mode:",
                 "enumStrings":      "Vehicle position,Specified position",
                 "enumValues":       "1,0",
-                "default":          0
+                "default":          0,
+                "decimalPlaces":    0
             }
         },
-        { "id": 180, "rawName": "MAV_CMD_DO_SET_PARAMETER", "friendlyName": "Set Parameter" },
+        { "id": 180, "rawName": "MAV_CMD_DO_SET_PARAMETER", "friendlyName": "MAV_CMD_DO_SET_PARAMETER" },
         {
             "id":           181,
             "rawName":      "MAV_CMD_DO_SET_RELAY",
@@ -573,7 +486,7 @@
             "param3": {
                 "label":            "Time:",
                 "default":          10,
-                "units":            "secs",
+                "units":            "seconds",
                 "decimalPlaces":    0
             }
         },
@@ -590,7 +503,7 @@
             },
             "param2": {
                 "label":            "PWM:",
-                "default":          1500,
+                "default":          1000,
                 "decimalPlaces":    0
             }
         },
@@ -618,38 +531,24 @@
             "param4": {
                 "label":            "Time:",
                 "default":          10,
-                "units":            "secs",
+                "units":            "seconds",
                 "decimalPlaces":    0
             }
         },
-        { "id": 185, "rawName": "MAV_CMD_DO_FLIGHTTERMINATION", "friendlyName": "Flight termination" },
+        { "id": 185, "rawName": "MAV_CMD_DO_FLIGHTTERMINATION", "friendlyName": "MAV_CMD_DO_FLIGHTTERMINATION" },
         {
             "id":                   189,
             "rawName":              "MAV_CMD_DO_LAND_START",
             "friendlyName":         "Land start",
             "description":          "Marker to indicate start of landing sequence.",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
-            "category":             "Flight control"
+            "category":             "Basic"
         },
-        { "id": 190, "rawName": "MAV_CMD_DO_RALLY_LAND", "friendlyName": "Rally land" },
-        { "id": 191, "rawName": "MAV_CMD_DO_GO_AROUND", "friendlyName": "Go around" },
-        { "id": 192, "rawName": "MAV_CMD_DO_REPOSITION", "friendlyName": "Reposition" },
-        { "id": 193, "rawName": "MAV_CMD_DO_PAUSE_CONTINUE", "friendlyName": "Pause/Continue" },
-        {
-            "id":                   194,
-            "rawName":              "MAV_CMD_DO_SET_REVERSE",
-            "friendlyName":         "Set moving direction" ,
-            "description":          "Set moving direction to forward or reverse.",
-            "friendlyEdit":         true,
-            "category":             "Advanced",
-            "param1": {
-                "label":            "Direction:",
-                "enumStrings":      "Forward,Reverse",
-                "enumValues":       "0,1",
-                "default":          0
-            }
-        },
-        { "id": 200, "rawName": "MAV_CMD_DO_CONTROL_VIDEO", "friendlyName": "Control video" },
+        { "id": 190, "rawName": "MAV_CMD_DO_RALLY_LAND", "friendlyName": "MAV_CMD_DO_RALLY_LAND" },
+        { "id": 191, "rawName": "MAV_CMD_DO_GO_AROUND", "friendlyName": "MAV_CMD_DO_GO_AROUND" },
+        { "id": 200, "rawName": "MAV_CMD_DO_CONTROL_VIDEO", "friendlyName": "MAV_CMD_DO_CONTROL_VIDEO" },
         {
             "id":                   201,
             "rawName":              "MAV_CMD_DO_SET_ROI",
@@ -758,57 +657,21 @@
                 "decimalPlaces":    0
             }
         },
-        {
-            "id":           204,
-            "rawName":      "MAV_CMD_DO_MOUNT_CONFIGURE",
-            "friendlyName": "Configure Mount",
-            "description":  "Configure the vehicle mount (e.g. gimbal).",
-            "category":     "Advanced",
-            "param1": {
-                "label":            "Mode:",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
-                "enumValues":       "0,1,2,3,4"
-            },
-            "param2": {
-                "label":            "Stabilize Roll:",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "No,Yes",
-                "enumValues":       "0,1"
-            },
-            "param3": {
-                "label":            "Stabilize Pitch:",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "No,Yes",
-                "enumValues":       "0,1"
-            },
-            "param4": {
-                "label":            "Stabilize Yaw:",
-                "default":          0,
-                "decimalPlaces":    0,
-                "enumStrings":      "No,Yes",
-                "enumValues":       "0,1"
-            }
-        },
+        { "id": 204, "rawName": "MAV_CMD_DO_MOUNT_CONFIGURE", "friendlyName": "MAV_CMD_DO_MOUNT_CONFIGURE" },
         {
             "id":           205,
             "rawName":      "MAV_CMD_DO_MOUNT_CONTROL",
-            "friendlyName": "Control Mount",
-            "description":  "Control the vehicle mount (e.g. gimbal).",
-            "category":     "Advanced",
+            "friendlyName": "Mount config",
+            "description":  "Control antenna mount or camera.",
+            "category":     "Camera",
             "param1": {
                 "label":            "Lat/Pitch:",
                 "default":          0,
-                "units":            "deg",
                 "decimalPlaces":    7
             },
             "param2": {
                 "label":            "Lon/Roll:",
                 "default":          0,
-                "units":            "deg",
                 "decimalPlaces":    7
             },
             "param3": {
@@ -820,7 +683,7 @@
                 "label":            "Mode:",
                 "default":          0,
                 "decimalPlaces":    0,
-                "enumStrings":      "Retract,Neutral,Mavlink Targeting,RC Targeting,GPS Point",
+                "enumStrings":      "Retract,Neutral,Mavlink Targetting,RC Targetting, GPS Point",
                 "enumValues":       "0,1,2,3,4"
             }
         },
@@ -833,7 +696,7 @@
             "param1": {
                 "label":            "Distance:",
                 "default":          25,
-                "units":            "m",
+                "units":            "meters",
                 "decimalPlaces":    2
             }
         },
@@ -869,7 +732,7 @@
                 "decimalPlaces":    0
             }
         },
-        { "id": 209, "rawName": "MAV_CMD_DO_MOTOR_TEST", "friendlyName": "Motor test" },
+        { "id": 209, "rawName": "MAV_CMD_DO_MOTOR_TEST", "friendlyName": "MAV_CMD_DO_MOTOR_TEST" },
         {
             "id":                   210,
             "rawName":              "MAV_CMD_DO_INVERTED_FLIGHT",
@@ -882,7 +745,8 @@
                 "label":            "Inverted:",
                 "enumStrings":      "Normal,Inverted",
                 "enumValues":       "0,1",
-                "default":          0
+                "default":          0,
+                "decimalPlaces":    0
             }
         },
         {
@@ -902,26 +766,12 @@
                 "label":            "Action:",
                 "enumStrings":      "Release,Grab",
                 "enumValues":       "0,1",
-                "default":          0
+                "default":          0,
+                "decimalPlaces":    0
             }
         },
-        {
-            "id":                   212,
-            "rawName":              "MAV_CMD_DO_AUTOTUNE_ENABLE",
-            "friendlyName":         "AutoTune Enable",
-            "description":          "AutoTune Enable.",
-            "specifiesCoordinate":  false,
-            "friendlyEdit":         true,
-            "category":             "Advanced",
-            "param2": {
-                "label":            "Enable:",
-                "enumStrings":      "Enable,Disable",
-                "enumValues":       "1,0",
-                "default":          1
-            }
-        },
-        { "id": 220, "rawName": "MAV_CMD_DO_MOUNT_CONTROL_QUAT" },
-        { "id": 221, "rawName": "MAV_CMD_DO_GUIDED_MASTER" },
+        { "id": 220, "rawName": "MAV_CMD_DO_MOUNT_CONTROL_QUAT", "friendlyName": "MAV_CMD_DO_MOUNT_CONTROL_QUAT" },
+        { "id": 221, "rawName": "MAV_CMD_DO_GUIDED_MASTER", "friendlyName": "MAV_CMD_DO_GUIDED_MASTER" },
         {
             "id":           222,
             "rawName":      "MAV_CMD_DO_GUIDED_LIMITS",
@@ -930,61 +780,52 @@
             "param1": {
                 "label":            "Timeout:",
                 "default":          0,
-                "units":            "secs",
+                "units":            "seconds",
                 "decimalPlaces":    0
             },
             "param2": {
                 "label":            "Min Alt:",
                 "default":          25,
-                "units":            "m",
+                "units":            "m(AMSL)",
                 "decimalPlaces":    2
             },
             "param3": {
                 "label":            "Max Alt:",
-                "units":            "m",
+                "units":            "m(AMSL)",
                 "default":          100,
                 "decimalPlaces":    2
             },
             "param4": {
                 "label":            "H Limit:",
                 "default":          25,
-                "units":            "m",
+                "units":            "m(AMSL)",
                 "decimalPlaces":    2
             }
         },
-        { "id": 241, "rawName": "MAV_CMD_PREFLIGHT_CALIBRATION", "friendlyName": "Calibration" },
-        { "id": 242, "rawName": "MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS", "friendlyName": "Set sensor offsets" },
-        { "id": 243, "rawName": "MAV_CMD_PREFLIGHT_UAVCAN", "friendlyName": "UAVCAN configure" },
-        { "id": 245, "rawName": "MAV_CMD_PREFLIGHT_STORAGE", "friendlyName": "Store parameters" },
-        { "id": 246, "rawName": "MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", "friendlyName": "Reboot/Shutdown vehicle" },
-        { "id": 252, "rawName": "MAV_CMD_OVERRIDE_GOTO", "friendlyName": "Override goto" },
-        { "id": 300, "rawName": "MAV_CMD_MISSION_START", "friendlyName": "Mission start" },
-        { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "Arm/Disarm" },
-        { "id": 410, "rawName": "MAV_CMD_GET_HOME_POSITION", "friendlyName": "Get home position" },
-        { "id": 500, "rawName": "MAV_CMD_START_RX_PAIR", "friendlyName": "Bind Spektrum receiver" },
-        { "id": 510, "rawName": "MAV_CMD_GET_MESSAGE_INTERVAL", "friendlyName": "Get message interval" },
-        { "id": 511, "rawName": "MAV_CMD_SET_MESSAGE_INTERVAL", "friendlyName": "Set message interval" },
-        { "id": 520, "rawName": "MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES", "friendlyName": "Get capabilities" },
-        { "id": 2000, "rawName": "MAV_CMD_IMAGE_START_CAPTURE", "friendlyName": "Start image capture" },
-        { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "Stop image capture" },
-        { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
-        { "id": 2500, "rawName": "MAV_CMD_VIDEO_START_CAPTURE", "friendlyName": "Start video capture" },
-        { "id": 2501, "rawName": "MAV_CMD_VIDEO_STOP_CAPTURE", "friendlyName": "Stop video cpture" },
-        { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
+        { "id": 252, "rawName": "MAV_CMD_OVERRIDE_GOTO", "friendlyName": "MAV_CMD_OVERRIDE_GOTO" },
+        { "id": 300, "rawName": "MAV_CMD_MISSION_START", "friendlyName": "MAV_CMD_MISSION_START" },
+        { "id": 400, "rawName": "MAV_CMD_COMPONENT_ARM_DISARM", "friendlyName": "MAV_CMD_COMPONENT_ARM_DISARM" },
+        { "id": 2000, "rawName": "MAV_CMD_IMAGE_START_CAPTURE", "friendlyName": "MAV_CMD_IMAGE_START_CAPTURE" },
+        { "id": 2001, "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE", "friendlyName": "MAV_CMD_IMAGE_STOP_CAPTURE" },
+        { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "MAV_CMD_DO_TRIGGER_CONTROL" },
+        { "id": 2500, "rawName": "MAV_CMD_VIDEO_START_CAPTURE", "friendlyName": "MAV_CMD_VIDEO_START_CAPTURE" },
+        { "id": 2501, "rawName": "MAV_CMD_VIDEO_STOP_CAPTURE", "friendlyName": "MAV_CMD_VIDEO_STOP_CAPTURE" },
+        { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "MAV_CMD_PANORAMA_CREATE" },
         {
             "id": 3000,
-            "rawName":      "MAV_CMD_DO_VTOL_TRANSITION",
+            "rawName": "MAV_CMD_DO_VTOL_TRANSITION",
             "friendlyName": "VTOL Transition",
-            "description":  "Perform flight mode transition.",
+            "description":  "Perform flight mode transition",
             "category":     "VTOL",
             "param1": {
                 "label":            "Mode:",
                 "default":          3,
+                "decimalPlaces":    0,
                 "enumStrings":      "Hover Mode,Plane Mode",
                 "enumValues":       "3,4"
             }
         },
-        { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "Payload prepare deploy" },
-        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "Payload control deploy" }
+        { "id": 30001, "rawName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY", "friendlyName": "MAV_CMD_PAYLOAD_PREPARE_DEPLOY" },
+        { "id": 30002, "rawName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY", "friendlyName": "MAV_CMD_PAYLOAD_CONTROL_DEPLOY" }
     ]
 }

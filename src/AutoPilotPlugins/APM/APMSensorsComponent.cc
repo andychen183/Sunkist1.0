@@ -1,18 +1,30 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 #include "APMSensorsComponent.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMSensorsComponentController.h"
 #include "APMAirframeComponent.h"
-#include "ParameterManager.h"
 
 // These two list must be kept in sync
 
@@ -30,7 +42,8 @@ QString APMSensorsComponent::name(void) const
 
 QString APMSensorsComponent::description(void) const
 {
-    return tr("Sensors Setup is used to calibrate the sensors within your vehicle.");
+    return tr("The Sensors Component allows you to calibrate the sensors within your vehicle. "
+              "Prior to flight you must calibrate the Magnetometer, Gyroscope and Accelerometer.");
 }
 
 QString APMSensorsComponent::iconResource(void) const
@@ -54,7 +67,6 @@ QStringList APMSensorsComponent::setupCompleteChangedTriggerList(void) const
     
     // Compass triggers
     triggers << "COMPASS_DEV_ID" << "COMPASS_DEV_ID2" << "COMPASS_DEV_ID3"
-             << "COMPASS_USE" << "COMPASS_USE2" << "COMPASS_USE3"
              << "COMPASS_OFS_X" << "COMPASS_OFS_X" << "COMPASS_OFS_X"
              << "COMPASS_OFS2_X" << "COMPASS_OFS2_X" << "COMPASS_OFS2_X"
              << "COMPASS_OFS3_X" << "COMPASS_OFS3_X" << "COMPASS_OFS3_X";
@@ -91,21 +103,18 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 {
     const size_t cCompass = 3;
     const size_t cOffset = 3;
-    QStringList rgDevicesIds;
-    QStringList rgCompassUse;
+    QStringList devicesIds;
     QStringList rgOffsets[cCompass];
 
-    rgDevicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
-    rgCompassUse << QStringLiteral("COMPASS_USE") << QStringLiteral("COMPASS_USE2") << QStringLiteral("COMPASS_USE3");
+    devicesIds << QStringLiteral("COMPASS_DEV_ID") << QStringLiteral("COMPASS_DEV_ID2") << QStringLiteral("COMPASS_DEV_ID3");
     rgOffsets[0] << QStringLiteral("COMPASS_OFS_X") << QStringLiteral("COMPASS_OFS_Y") << QStringLiteral("COMPASS_OFS_Z");
     rgOffsets[1] << QStringLiteral("COMPASS_OFS2_X") << QStringLiteral("COMPASS_OFS2_Y") << QStringLiteral("COMPASS_OFS2_Z");
     rgOffsets[2] << QStringLiteral("COMPASS_OFS3_X") << QStringLiteral("COMPASS_OFS3_Y") << QStringLiteral("COMPASS_OFS3_Z");
 
     for (size_t i=0; i<cCompass; i++) {
-        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgDevicesIds[i])->rawValue().toInt() != 0 &&
-            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgCompassUse[i])->rawValue().toInt() != 0) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, devicesIds[i])->rawValue().toInt() != 0) {
             for (size_t j=0; j<cOffset; j++) {
-                if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
+                if (_autopilot->getParameterFact(FactSystem::defaultComponentId, rgOffsets[i][j])->rawValue().toFloat() == 0.0f) {
                     return true;
                 }
             }
@@ -117,18 +126,16 @@ bool APMSensorsComponent::compassSetupNeeded(void) const
 
 bool APMSensorsComponent::accelSetupNeeded(void) const
 {
-    QStringList rgOffsets;
+    QStringList offsets;
 
-    // The best we can do is test the first accel which will always be there. We don't have enough information to know
-    // whether any of the other accels are available.
-    rgOffsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
+    offsets << QStringLiteral("INS_ACCOFFS_X") << QStringLiteral("INS_ACCOFFS_Y") << QStringLiteral("INS_ACCOFFS_Z");
 
-    int zeroCount = 0;
-    for (int i=0; i<rgOffsets.count(); i++) {
-        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, rgOffsets[i])->rawValue().toFloat() == 0.0f) {
-            zeroCount++;
+    foreach(const QString& offset, offsets) {
+        if (_autopilot->getParameterFact(FactSystem::defaultComponentId, offset)->rawValue().toFloat() == 0.0f) {
+            return true;
         }
     }
 
-    return zeroCount == rgOffsets.count();
+    return false;
 }
+

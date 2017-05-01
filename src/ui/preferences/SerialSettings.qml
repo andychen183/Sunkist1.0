@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 import QtQuick          2.5
 import QtQuick.Controls 1.4
@@ -32,7 +45,7 @@ Item {
         spacing:    ScreenTools.defaultFontPixelHeight / 2
         QGCLabel {
             id:     serialLabel
-            text:   qsTr("Serial Link Settings")
+            text:   "Serial Link Settings"
         }
         Rectangle {
             height: 1
@@ -46,21 +59,15 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   qsTr("Serial Port:")
+                text:   "Serial Port:"
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
-            QGCLabel {
-                text:       qsTr("No serial ports available");
-                visible:    QGroundControl.linkManager.serialPortStrings.length == 0
-            }
-
             QGCComboBox {
-                id:                     commPortCombo
+                id:             commPortCombo
+                width:          _secondColumn
+                model:          QGroundControl.linkManager.serialPortStrings
                 anchors.verticalCenter: parent.verticalCenter
-                width:                  _secondColumn
-                model:                  QGroundControl.linkManager.serialPortStrings
-                visible:                QGroundControl.linkManager.serialPortStrings.length > 0
                 onActivated: {
                     if (index != -1) {
                         subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
@@ -72,7 +79,7 @@ Item {
                             subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
                         var index = commPortCombo.find(subEditConfig.portDisplayName)
                         if (index === -1) {
-                            console.warn(qsTr("Serial Port not present"), subEditConfig.portName)
+                            console.warn("Serial Port not present", subEditConfig.portName)
                         } else {
                             commPortCombo.currentIndex = index
                         }
@@ -85,7 +92,7 @@ Item {
         Row {
             spacing:    ScreenTools.defaultFontPixelWidth
             QGCLabel {
-                text:   qsTr("Baud Rate:")
+                text:   "Baud Rate:"
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
@@ -106,7 +113,7 @@ Item {
                     }
                     var index = baudCombo.find(baud)
                     if (index === -1) {
-                        console.warn(qsTr("Baud rate name not in combo box"), baud)
+                        console.warn("Baud rate name not in combo box", baud)
                     } else {
                         baudCombo.currentIndex = index
                     }
@@ -121,7 +128,7 @@ Item {
         //-- Advanced Serial Settings
         QGCCheckBox {
             id:     showAdvanced
-            text:   qsTr("Show Advanced Serial Settings")
+            text:   "Show Advanced Serial Settings"
         }
         Item {
             height: ScreenTools.defaultFontPixelHeight / 2
@@ -129,7 +136,7 @@ Item {
         }
         //-- Flow Control
         QGCCheckBox {
-            text:       qsTr("Enable Flow Control")
+            text:       "Enable Flow Control"
             checked:    subEditConfig ? subEditConfig.flowControl !== 0 : false
             visible:    showAdvanced.checked
             onCheckedChanged: {
@@ -143,14 +150,14 @@ Item {
             spacing:    ScreenTools.defaultFontPixelWidth
             visible:    showAdvanced.checked
             QGCLabel {
-                text:   qsTr("Parity:")
+                text:   "Parity:"
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }
             QGCComboBox {
                 id:             parityCombo
                 width:          _firstColumn
-                model:          [qsTr("None"), qsTr("Even"), qsTr("Odd")]
+                model:          ["None", "Even", "Odd"]
                 anchors.verticalCenter: parent.verticalCenter
                 onActivated: {
                     if (index != -1) {
@@ -210,7 +217,7 @@ Item {
             spacing:    ScreenTools.defaultFontPixelWidth
             visible:    showAdvanced.checked
             QGCLabel {
-                text:   qsTr("Stop Bits:")
+                text:   "Stop Bits:"
                 width:  _firstColumn
                 anchors.verticalCenter: parent.verticalCenter
             }

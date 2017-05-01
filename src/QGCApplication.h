@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+ QGroundControl Open Source Ground Control Station
+
+ (c) 2009 - 2015 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+ This file is part of the QGROUNDCONTROL project
+
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+ ======================================================================*/
 
 /**
  * @file
@@ -32,6 +45,7 @@
 #include "MultiVehicleManager.h"
 #include "JoystickManager.h"
 #include "GAudioOutput.h"
+#include "AutoPilotPluginManager.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
 
@@ -63,12 +77,6 @@ class QGCApplication : public
 public:
     QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
-
-    static const char* parameterFileExtension;
-    static const char* missionFileExtension;
-    static const char* fenceFileExtension;
-    static const char* rallyPointFileExtension;
-    static const char* telemetryFileExtension;
 
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
     void deleteAllSettingsNextBoot(void);
@@ -127,6 +135,8 @@ public slots:
     /// You can connect to this slot to show a critical message box from a different thread.
     void criticalMessageBoxOnMainThread(const QString& title, const QString& msg);
 
+    void showFlyView(void);
+    void showPlanView(void);
     void showSetupView(void);
 
     void qmlAttemptWindowClose(void);
@@ -160,14 +170,19 @@ public:
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
 
+    void _showSetupFirmware(void);
+    void _showSetupParameters(void);
+    void _showSetupSummary(void);
+    void _showSetupVehicleComponent(VehicleComponent* vehicleComponent);
+
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
 private slots:
     void _missingParamsDisplay(void);
 
 private:
-    void        _loadCurrentStyle   ();
-    QObject*    _rootQmlObject      ();
+    void _loadCurrentStyle(void);
+    QObject* _rootQmlObject(void);
 
 #ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
@@ -177,12 +192,13 @@ private:
 
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;
-    bool                _styleIsDark;                                       ///< true: dark style, false: light style
-    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
-    QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
-    QStringList         _missingParams;                                     ///< List of missing facts to be displayed
-    bool				_fakeMobile;                                        ///< true: Fake ui into displaying mobile interface
-    bool                _settingsUpgraded;                                  ///< true: Settings format has been upgrade to new version
+    bool                _styleIsDark;      ///< true: dark style, false: light style
+
+    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;  ///< Timeout to wait for next missing fact to come in before display
+    QTimer              _missingParamsDelayedDisplayTimer;                ///< Timer use to delay missing fact display
+    QStringList         _missingParams;                                  ///< List of missing facts to be displayed
+
+    bool				_fakeMobile;	///< true: Fake ui into displaying mobile interface
 
 #ifdef QT_DEBUG
     bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
@@ -205,7 +221,6 @@ private:
 
     /// Unit Test have access to creating and destroying singletons
     friend class UnitTest;
-
 };
 
 /// @brief Returns the QGCApplication object singleton.

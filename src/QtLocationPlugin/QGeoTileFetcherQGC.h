@@ -48,6 +48,7 @@
 #define QGEOTILEFETCHERQGC_H
 
 #include <QtLocation/private/qgeotilefetcher_p.h>
+//#include <QtLocation/private/qgeotilecache_p.h>
 #include "QGCMapUrlEngine.h"
 
 class QGeoTiledMappingManagerEngine;

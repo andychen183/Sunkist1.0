@@ -82,14 +82,42 @@ bool SerialLink::_isBootloader()
     return false;
 }
 
-void SerialLink::_writeBytes(const QByteArray data)
+void SerialLink::writeBytes(const char* data, qint64 size)
 {
     if(_port && _port->isOpen()) {
-        _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
-        _port->write(data);
+        _logOutputDataRate(size, QDateTime::currentMSecsSinceEpoch());
+        _port->write(data, size);
     } else {
-        // Error occurred
+        // Error occured
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
+    }
+}
+
+/**
+ * @brief Read a number of bytes from the interface.
+ *
+ * @param data Pointer to the data byte array to write the bytes to
+ * @param maxLength The maximum number of bytes to write
+ **/
+void SerialLink::readBytes()
+{
+    if(_port && _port->isOpen()) {
+        const qint64 maxLength = 2048;
+        char data[maxLength];
+        _dataMutex.lock();
+        qint64 numBytes = _port->bytesAvailable();
+
+        if (numBytes > 0) {
+            /* Read as much data in buffer as possible without overflow */
+            if(maxLength < numBytes) numBytes = maxLength;
+
+            _logInputDataRate(numBytes, QDateTime::currentMSecsSinceEpoch());
+
+            _port->read(data, numBytes);
+            QByteArray b(data, numBytes);
+            emit bytesReceived(this, b);
+        }
+        _dataMutex.unlock();
     }
 }
 
@@ -182,6 +210,10 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     }
 
     _port = new QSerialPort(_config->portName());
+    if (!_port) {
+        emit communicationUpdate(getName(),"Error opening port: " + _config->portName());
+        return false; // couldn't create serial port.
+    }
 
     QObject::connect(_port, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
                      this, &SerialLink::linkError);
@@ -216,8 +248,6 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         return false; // couldn't open serial port
     }
 
-    _port->setDataTerminalReady(true);
-
     qCDebug(SerialLinkLog) << "Configuring port";
     _port->setBaudRate     (_config->baud());
     _port->setDataBits     (static_cast<QSerialPort::DataBits>     (_config->dataBits()));
@@ -228,6 +258,28 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
     emit communicationUpdate(getName(), "Opened port!");
     emit connected();
 
+    // Send command to start MAVLink
+    // XXX hacky but safe
+    // Start NSH
+    //--------------------------------------
+    const char init[] = {0x0d, 0x0d, 0x0d};
+    QByteArray dataInit = QByteArray(init, sizeof(init));
+    writeBytes(init, sizeof(init));
+
+    // Stop any running mavlink instance
+    //--------------------------------------
+    const char* cmd = "mavlink stop-all\n";
+    writeBytes(cmd, strlen(cmd));
+    writeBytes(init, sizeof(init)-1);
+
+    cmd = "uorb start\n";
+    writeBytes(cmd, strlen(cmd));
+    writeBytes(init, sizeof(init)-1);
+
+    cmd = "sh /etc/init.d/rc.usb\n";
+    writeBytes(cmd, strlen(cmd));
+    writeBytes(init, sizeof(init)+1);
+
     qCDebug(SerialLinkLog) << "Connection SeriaLink: " << "with settings" << _config->portName()
              << _config->baud() << _config->dataBits() << _config->parity() << _config->stopBits();
 
@@ -237,7 +289,8 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 void SerialLink::_readBytes(void)
 {
     qint64 byteCount = _port->bytesAvailable();
-    if (byteCount) {
+    if (byteCount)
+    {
         QByteArray buffer;
         buffer.resize(byteCount);
         _port->read(buffer.data(), buffer.size());
@@ -247,19 +300,12 @@ void SerialLink::_readBytes(void)
 
 void SerialLink::linkError(QSerialPort::SerialPortError error)
 {
-    switch (error) {
-    case QSerialPort::NoError:
-        break;
-    case QSerialPort::ResourceError:
-        emit connectionRemoved(this);
-        break;
-    default:
+    if (error != QSerialPort::NoError) {
         // You can use the following qDebug output as needed during development. Make sure to comment it back out
         // when you are done. The reason for this is that this signal is very noisy. For example if you try to
         // connect to a PixHawk before it is ready to accept the connection it will output a continuous stream
         // of errors until the Pixhawk responds.
         //qCDebug(SerialLinkLog) << "SerialLink::linkError" << error;
-        break;
     }
 }
 

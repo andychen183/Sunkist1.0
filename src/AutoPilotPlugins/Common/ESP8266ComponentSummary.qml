@@ -25,43 +25,28 @@ FactPanel {
     property Fact wifiHostPort:     controller.getParameterFact(esp8266.componentID, "WIFI_UDP_HPORT")
     property Fact wifiClientPort:   controller.getParameterFact(esp8266.componentID, "WIFI_UDP_CPORT")
     property Fact uartBaud:         controller.getParameterFact(esp8266.componentID, "UART_BAUDRATE")
-    property Fact wifiMode:         controller.getParameterFact(esp8266.componentID, "WIFI_MODE", false) //-- Don't bitch if missing
 
     Column {
         anchors.fill:       parent
+        anchors.margins:    8
         VehicleSummaryRow {
-            labelText: qsTr("Firmware Version:")
+            labelText: "Firmware Version:"
             valueText: esp8266.version
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi Mode:")
-            valueText: wifiMode ? (wifiMode.value === 0 ? "AP Mode" : "Station Mode") : "AP Mode"
+            labelText: "WiFi Channel:"
+            valueText: wifiChannel ? wifiChannel.valueString : ""
         }
         VehicleSummaryRow {
-            labelText:  qsTr("WiFi Channel:")
-            valueText:  wifiChannel ? wifiChannel.valueString : ""
-            visible:    wifiMode ? wifiMode.value === 0 : true
-        }
-        VehicleSummaryRow {
-            labelText: qsTr("WiFi AP SSID:")
+            labelText: "WiFi SSID:"
             valueText: esp8266.wifiSSID
         }
         VehicleSummaryRow {
-            labelText: qsTr("WiFi AP Password:")
+            labelText: "WiFi Password:"
             valueText: esp8266.wifiPassword
         }
-        /* Too much info makes it all crammed
         VehicleSummaryRow {
-            labelText: qsTr("WiFi STA SSID:")
-            valueText: esp8266.wifiSSIDSta
-        }
-        VehicleSummaryRow {
-            labelText: qsTr("WiFi STA Password:")
-            valueText: esp8266.wifiPasswordSta
-        }
-        */
-        VehicleSummaryRow {
-            labelText: qsTr("UART Baud Rate:")
+            labelText: "UART Baud Rate:"
             valueText: uartBaud ? uartBaud.valueString : ""
         }
     }

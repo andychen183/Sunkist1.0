@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
-
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
 /// @file
 ///     @author Don Gagne <don@thegagnes.com>
@@ -77,7 +90,6 @@ void Fact::forceSetRawValue(const QVariant& value)
             _rawValue.setValue(typedValue);
             _sendValueChangedSignal(cookedValue());
             emit _containerRawValueChanged(rawValue());
-            emit rawValueChanged(_rawValue);
         }
     } else {
         qWarning() << "Meta data pointer missing";
@@ -95,7 +107,6 @@ void Fact::setRawValue(const QVariant& value)
                 _rawValue.setValue(typedValue);
                 _sendValueChangedSignal(cookedValue());
                 emit _containerRawValueChanged(rawValue());
-                emit rawValueChanged(_rawValue);
             }
         }
     } else {
@@ -138,7 +149,6 @@ void Fact::_containerSetRawValue(const QVariant& value)
     _rawValue = value;
     _sendValueChangedSignal(cookedValue());
     emit vehicleUpdated(_rawValue);
-    emit rawValueChanged(_rawValue);
 }
 
 QString Fact::name(void) const
@@ -239,7 +249,7 @@ QVariantList Fact::bitmaskValues(void) const
     }
 }
 
-QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
+QString Fact::_variantToString(const QVariant& variant) const
 {
     QString valueString;
 
@@ -250,7 +260,7 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
         if (qIsNaN(fValue)) {
             valueString = QStringLiteral("--.--");
         } else {
-            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces);
+            valueString = QString("%1").arg(fValue, 0, 'f', decimalPlaces());
         }
     }
         break;
@@ -260,7 +270,7 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
         if (qIsNaN(dValue)) {
             valueString = QStringLiteral("--.--");
         } else {
-            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces);
+            valueString = QString("%1").arg(dValue, 0, 'f', decimalPlaces());
         }
     }
         break;
@@ -272,20 +282,14 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
     return valueString;
 }
 
-QString Fact::rawValueStringFullPrecision(void) const
-{
-    return _variantToString(rawValue(), 18);
-}
-
-
 QString Fact::rawValueString(void) const
 {
-    return _variantToString(rawValue(), decimalPlaces());
+    return _variantToString(rawValue());
 }
 
 QString Fact::cookedValueString(void) const
 {
-    return _variantToString(cookedValue(), decimalPlaces());
+    return _variantToString(cookedValue());
 }
 
 QVariant Fact::rawDefaultValue(void) const
@@ -316,7 +320,7 @@ QVariant Fact::cookedDefaultValue(void) const
 
 QString Fact::cookedDefaultValueString(void) const
 {
-    return _variantToString(cookedDefaultValue(), decimalPlaces());
+    return _variantToString(cookedDefaultValue());
 }
 
 FactMetaData::ValueType_t Fact::type(void) const
@@ -386,7 +390,7 @@ QVariant Fact::cookedMin(void) const
 
 QString Fact::cookedMinString(void) const
 {
-    return _variantToString(cookedMin(), decimalPlaces());
+    return _variantToString(cookedMin());
 }
 
 QVariant Fact::rawMax(void) const
@@ -411,7 +415,7 @@ QVariant Fact::cookedMax(void) const
 
 QString Fact::cookedMaxString(void) const
 {
-    return _variantToString(cookedMax(), decimalPlaces());
+    return _variantToString(cookedMax());
 }
 
 bool Fact::minIsDefaultForType(void) const
@@ -547,14 +551,4 @@ QString Fact::enumOrValueString(void)
         qWarning() << "Meta data pointer missing";
     }
     return QString();
-}
-
-double Fact::increment(void) const
-{
-    if (_metaData) {
-        return _metaData->increment();
-    } else {
-        qWarning() << "Meta data pointer missing";
-    }
-    return std::numeric_limits<double>::quiet_NaN();
 }

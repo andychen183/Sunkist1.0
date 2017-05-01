@@ -24,25 +24,26 @@ FactPanel {
 
     Column {
         anchors.fill:       parent
+        anchors.margins:    8
 
         VehicleSummaryRow {
-            labelText: qsTr("Throttle failsafe:")
-            valueText:  _failsafeThrEnable.value != 0 ? _failsafeThrValue.valueString : qsTr("Disabled")
+            labelText: "Throttle failsafe:"
+            valueText:  _failsafeThrEnable.value != 0 ? _failsafeThrValue.valueString : "Disabled"
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Voltage failsafe:")
-            valueText:  _failsafeBattVoltage.value == 0 ? qsTr("Disabled") : _failsafeBattVoltage.valueString + " " + _failsafeBattVoltage.units
+            labelText: "Voltage failsafe:"
+            valueText:  _failsafeBattVoltage.value == 0 ? "Disabled" : _failsafeBattVoltage.valueString
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("mAh failsafe:")
-            valueText:  _failsafeBattMah.value == 0 ? qsTr("Disabled") : _failsafeBattMah.valueString + " " + _failsafeBattMah.units
+            labelText: "mAh failsafe:"
+            valueText:  _failsafeBattMah.value == 0 ? "Disabled" : _failsafeBattMah.valueString
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RTL min alt:")
-            valueText: _rtlAltFact.value < 0 ? qsTr("current") : _rtlAltFact.valueString + " " + _rtlAltFact.units
+            labelText: "RTL min alt:"
+            valueText: _rtlAltFact.value < 0 ? "current" : _rtlAltFact.valueString
         }
     }
 }

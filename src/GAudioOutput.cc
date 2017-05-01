@@ -1,12 +1,25 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
 
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
 
 /**
  * @file
@@ -34,7 +47,8 @@ const char* GAudioOutput::_mutedKey = "AudioMuted";
 
 GAudioOutput::GAudioOutput(QGCApplication* app)
     : QGCTool(app)
-    , muted(false)
+    //, muted(false)
+    , muted(true)
 #ifndef __android__
     , thread(new QThread())
     , worker(new QGCAudioWorker())
@@ -75,11 +89,12 @@ bool GAudioOutput::isMuted()
     return muted;
 }
 
-bool GAudioOutput::say(const QString& inText)
+bool GAudioOutput::say(const QString& inText, int severity)
 {
-    if (!muted && !qgcApp()->runningUnitTests()) {
+    if (!muted) {
 #if defined __android__
 #if defined QGC_SPEECH_ENABLED
+        Q_UNUSED(severity);
         static const char V_jniClassName[] {"org/qgroundcontrol/qgchelper/UsbDeviceJNI"};
         QAndroidJniEnvironment env;
         if (env->ExceptionCheck()) {
@@ -91,7 +106,7 @@ bool GAudioOutput::say(const QString& inText)
         QAndroidJniObject::callStaticMethod<void>(V_jniClassName, "say", "(Ljava/lang/String;)V", javaMessage.object<jstring>());
 #endif
 #else
-        emit textToSpeak(inText);
+        emit textToSpeak(inText, severity);
 #endif
     }
     return true;

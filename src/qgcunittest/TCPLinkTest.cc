@@ -1,41 +1,52 @@
-/****************************************************************************
- *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
- *
- * QGroundControl is licensed according to the terms in the file
- * COPYING.md in the root of the source code directory.
- *
- ****************************************************************************/
+/*=====================================================================
+ 
+ QGroundControl Open Source Ground Control Station
+ 
+ (c) 2009 - 2014 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ 
+ This file is part of the QGROUNDCONTROL project
+ 
+ QGROUNDCONTROL is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ QGROUNDCONTROL is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+ 
+ ======================================================================*/
 
+#include "TCPLinkTest.h"
+#include "TCPLoopBackServer.h"
 
 /// @file
 ///     @brief TCPLink class unit test
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#include "TCPLinkTest.h"
-#include "TCPLoopBackServer.h"
-
-TCPLinkTest::TCPLinkTest(void)
+TCPLinkUnitTest::TCPLinkUnitTest(void)
     : _config(NULL)
     , _link(NULL)
     , _multiSpy(NULL)
 {
-
-}
-
-// Called before every test
-void TCPLinkTest::init(void)
-{
-    UnitTest::init();
-    
-    Q_ASSERT(_link == nullptr);
-    Q_ASSERT(_multiSpy == nullptr);
-    Q_ASSERT(_config == nullptr);
-
     _config = new TCPConfiguration("MockTCP");
     _config->setAddress(QHostAddress::LocalHost);
     _config->setPort(5760);
+}
+
+// Called before every test
+void TCPLinkUnitTest::init(void)
+{
+    UnitTest::init();
+    
+    Q_ASSERT(_link == NULL);
+    Q_ASSERT(_multiSpy == NULL);
+
     _link = new TCPLink(_config);
     Q_ASSERT(_link != NULL);
 
@@ -44,32 +55,48 @@ void TCPLinkTest::init(void)
     _rgSignals[disconnectedSignalIndex] = SIGNAL(disconnected(void));
     _rgSignals[communicationErrorSignalIndex] = SIGNAL(communicationError(const QString&, const QString&));
     _rgSignals[communicationUpdateSignalIndex] = SIGNAL(communicationUpdate(const QString&, const QString&));
-    //_rgSignals[deleteLinkSignalIndex] = SIGNAL(_deleteLink(LinkInterface*));
+    _rgSignals[deleteLinkSignalIndex] = SIGNAL(deleteLink(LinkInterface* const));
 
     _multiSpy = new MultiSignalSpy();
     QCOMPARE(_multiSpy->init(_link, _rgSignals, _cSignals), true);
 }
 
 // Called after every test
-void TCPLinkTest::cleanup(void)
+void TCPLinkUnitTest::cleanup(void)
 {
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_link);
     Q_ASSERT(_config);
 
     delete _multiSpy;
-    _multiSpy = nullptr;
-
     delete _link;
-    _link = nullptr;
-
     delete _config;
-    _config = nullptr;
 
+    _multiSpy = NULL;
+    _link     = NULL;
+    _config   = NULL;
     UnitTest::cleanup();
 }
 
-void TCPLinkTest::_connectFail_test(void)
+void TCPLinkUnitTest::_properties_test(void)
+{
+    Q_ASSERT(_config);
+    Q_ASSERT(_link);
+    Q_ASSERT(_multiSpy);
+    Q_ASSERT(_multiSpy->checkNoSignals() == true);
+    
+    // Test no longer valid
+}
+
+void TCPLinkUnitTest::_nameChangedSignal_test(void)
+{
+    // Test no longer valid
+    Q_ASSERT(_config);
+    Q_ASSERT(_link);
+    Q_ASSERT(_multiSpy);
+}
+
+void TCPLinkUnitTest::_connectFail_test(void)
 {
     Q_ASSERT(_config);
     Q_ASSERT(_link);
@@ -84,7 +111,7 @@ void TCPLinkTest::_connectFail_test(void)
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(communicationErrorSignalMask), true);
     QList<QVariant> arguments = _multiSpy->getSpyByIndex(communicationErrorSignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(1).toString().contains(_link->getName()), true);
+    QCOMPARE(arguments.at(0).toString(), _link->getName());
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
     
     _link->_disconnect();
@@ -97,14 +124,12 @@ void TCPLinkTest::_connectFail_test(void)
     QCOMPARE(_multiSpy->waitForSignalByIndex(communicationErrorSignalIndex, 1000), true);
     QCOMPARE(_multiSpy->checkOnlySignalByMask(communicationErrorSignalMask), true);
     arguments = _multiSpy->getSpyByIndex(communicationErrorSignalIndex)->takeFirst();
-    QCOMPARE(arguments.at(1).toString().contains(_link->getName()), true);
+    QCOMPARE(arguments.at(0).toString(), _link->getName());
     _multiSpy->clearSignalByIndex(communicationErrorSignalIndex);
 }
 
-void TCPLinkTest::_connectSucceed_test(void)
+void TCPLinkUnitTest::_connectSucceed_test(void)
 {
-    QSKIP("FIXME: Failing on OSX");
-
     Q_ASSERT(_link);
     Q_ASSERT(_multiSpy);
     Q_ASSERT(_multiSpy->checkNoSignals() == true);
@@ -129,7 +154,7 @@ void TCPLinkTest::_connectSucceed_test(void)
     const char* bytesWrittenSignal = SIGNAL(bytesWritten(qint64));
     MultiSignalSpy bytesWrittenSpy;
     QCOMPARE(bytesWrittenSpy.init(_link->getSocket(), &bytesWrittenSignal, 1), true);
-    _link->writeBytesSafe(bytesOut.data(), bytesOut.size());
+    _link->writeBytes(bytesOut.data(), bytesOut.size());
     _multiSpy->clearAllSignals();
     
     // We emit this signal such that it will be queued and run on the TCPLink thread. This in turn

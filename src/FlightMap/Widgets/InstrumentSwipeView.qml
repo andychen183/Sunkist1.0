@@ -15,109 +15,97 @@ Item {
     property color  backgroundColor
     property var    maxHeight   ///< Maximum height that should be taken, smaller than this is ok
 
-    property real   _margins:           ScreenTools.defaultFontPixelWidth / 2
-    property real   _pageWidth:         _root.width
-    property int    _currentPage:       0
-    property int    _maxPage:           2
+    property real   _margins:   ScreenTools.defaultFontPixelWidth / 2
 
     function showPicker() {
         valuesPage.showPicker()
     }
 
-    function showPage(pageIndex) {
-        _root.height = Qt.binding(function() { return _root.children[pageIndex].height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height } )
-        _root.children[0].x = -(pageIndex * _pageWidth)
-    }
-
     ValuesWidget {
         id:         valuesPage
-        width:      _pageWidth
+        width:      _root.width
         qgcView:    _root.qgcView
         textColor:  _root.textColor
         maxHeight:  _root.maxHeight
     }
 
-    VehicleHealthWidget {
-        id:             healthPage
-        anchors.left:   valuesPage.right
-        width:          _pageWidth
-        qgcView:        _root.qgcView
-        textColor:      _root.textColor
-        maxHeight:      _root.maxHeight
-    }
-
     VibrationWidget {
         id:                 vibrationPage
-        anchors.left:       healthPage.right
-        width:              _pageWidth
+        anchors.left:       valuesPage.right
+        width:              _root.width
         textColor:          _root.textColor
         backgroundColor:    _root.backgroundColor
         maxHeight:          _root.maxHeight
     }
+
+
 
     Row {
         id:                         pageIndicatorRow
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
         spacing:                    _margins
+        visible:                    multiVehicleManager.activeVehicle
 
-        Repeater {
-            model: _maxPage + 1
-
-            Rectangle {
-                height:         radius * 2
-                width:          radius * 2
-                radius:         ScreenTools.defaultFontPixelWidth / 3
-                border.color:   textColor
-                border.width:   1
-                color:          _currentPage == index ? textColor : "transparent"
-            }
+        Rectangle {
+            id:             valuesPageIndicator
+            height:         radius * 2
+            width:          radius * 2
+           // radius:         2.5  //remove little dot
+            border.color:   textColor
+            border.width:   1
+            color:          textColor
         }
+
+//        Rectangle {
+//            id:             vibrationPageIndicator
+//            height:         radius * 2
+//            width:          radius * 2
+//            radius:         2.5
+//            border.color:   textColor
+//            border.width:   1
+//            color:          "transparent"
+//        }
     }
 
-    MouseArea {
-        anchors.fill: parent
-
-        onClicked: {
-            if (_currentPage == _maxPage) {
-                _currentPage = 0
-            } else {
-                _currentPage++
-            }
-            showPage(_currentPage)
-        }
-    }
-
-    /*
-      Switching from swipe to click to change pages. Keeping swipe code for now in case of change back.
     MouseArea {
         anchors.fill: parent
 
         property real xDragStart
-        property real xFirstPageSave
+        property real xValuesPageSave
 
         onPressed: {
             if (mouse.button == Qt.LeftButton) {
                 mouse.accepted = true
                 xDragStart = mouse.x
-                xFirstPageSave = _root.children[0].x
+                xValuesPageSave = valuesPage.x
             }
         }
 
-        onPositionChanged: {
-            _root.children[0].x = xFirstPageSave + mouse.x - xDragStart
-        }
+//        onPositionChanged: {
+//            valuesPage.x = xValuesPageSave + mouse.x - xDragStart
+//        }
 
-        onReleased: {
-            if (mouse.x < xDragStart) {
-                // Swipe left
-                _currentPage = Math.min(_currentPage + 1, _maxPage)
-            } else {
-                // Swipe right
-                _currentPage = Math.max(_currentPage - 1, 0)
-            }
-            showPage(_currentPage)
-        }
+//        onReleased: {
+//            if (mouse.x < xDragStart) {
+//                if (xValuesPageSave == 0) {
+//                    valuesPage.x = -valuesPage.width
+//                    _root.height = vibrationPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height
+//                    valuesPageIndicator.color = "transparent"
+//                    vibrationPageIndicator.color = textColor
+//                } else {
+//                    valuesPage.x = xValuesPageSave
+//                }
+//            } else {
+//                if (xValuesPageSave != 0) {
+//                    valuesPage.x = 0
+//                    _root.height = valuesPage.height + pageIndicatorRow.anchors.topMargin + pageIndicatorRow.height
+//                    valuesPageIndicator.color = textColor
+//                    vibrationPageIndicator.color = "transparent"
+//                } else {
+//                    valuesPage.x = xValuesPageSave
+//                }
+//            }
+//        }
     }
-    */
 }
