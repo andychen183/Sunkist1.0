@@ -162,5 +162,12 @@
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
         <file alias="Vehicle/WindFact.json">src/Vehicle/WindFact.json</file>
         <file alias="Vehicle/VibrationFact.json">src/Vehicle/VibrationFact.json</file>
+        <file>QtInvokeJS/assets/js/blockly_compressed.js</file>
+        <file>QtInvokeJS/assets/js/blockly_uncompressed.js</file>
+        <file>QtInvokeJS/assets/js/blocks_compressed.js</file>
+        <file>QtInvokeJS/assets/js/en.js</file>
+        <file>QtInvokeJS/assets/js/javascript_compressed.js</file>
+        <file>QtInvokeJS/assets/js/zh-hans.js</file>
+        <file>QtInvokeJS/assets/index.html</file>
     </qresource>
 </RCC>

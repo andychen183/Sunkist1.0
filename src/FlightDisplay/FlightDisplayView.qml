@@ -259,72 +259,76 @@ QGCView {
             anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
             Image {
                 id:     _backButton
-                source: "qrc:/qmlimages/resources/btn_back_nor.png"
-            }
-            onPressed: {
-                 _backButton.source = "qrc:/qmlimages/resources/btn_back_press.png"
-            }
-            onReleased: {
-                _backButton.source = "qrc:/qmlimages/resources/btn_back_nor.png"
-            }
-            onClicked: {
-                //back to the setting page
-            }
-        }
-
-        MouseArea {
-            id:                     __speedButtonArea
-            width:                  _speedButton.width
-            height:                 _speedButton.height
-            anchors.left:           parent.left
-            anchors.leftMargin:     ScreenTools.defaultFontPixelHeight * 5
-            anchors.top:            parent.top
-            anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
-            Image {
-                id:     _speedButton
                 source: "qrc:/qmlimages/resources/btn_speed.png"
                 Text {
                     id:               _speedText
-                    anchors.centerIn: _speedButton
-                    text: qsTr("30%")
+                    anchors.centerIn: _backButton
+                    text: qsTr("Scratch")
                     color: "#FFF"
                     font {
-                        pixelSize: 34
+                        pixelSize: 20
                     }
                 }
             }
-            onClicked: {
-                //the adjust line change its position
-                switch(_speedCounter)
-                {
-                    case 0:
-                    {
-                        _speedText.text=qsTr("60%")
-                        _speedCounter++
-                         _activeVehicle.speedAmount = 60
-                        break;
-                    }
-                    case 1:
-                    {
-                        _speedText.text=qsTr("100%")
-                        _speedCounter++
-                        _activeVehicle.speedAmount = 100
-                        break;
-                    }
-                    case 2:
-                    {
-                        _speedText.text=qsTr("30%")
-                        _speedCounter=0
-                        _activeVehicle.speedAmount = 30
-                        break;
-                    }
-                    default:
-                        _speedText.text=qsTr("30%")
-                        break;
-                }
 
+            onClicked: {
+                QGroundControl.multiVehicleManager.showScratch()
             }
         }
+
+//                MouseArea {
+//                    id:                     __speedButtonArea
+//                    width:                  _speedButton.width
+//                    height:                 _speedButton.height
+//                    anchors.left:           parent.left
+//                    anchors.leftMargin:     ScreenTools.defaultFontPixelHeight * 5
+//                    anchors.top:            parent.top
+//                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
+//                    Image {
+//                        id:     _speedButton
+//                        source: "qrc:/res/resources/btn_speed.png"
+//                        Text {
+//                            id:               _speedText
+//                            anchors.centerIn: _speedButton
+//                            text: qsTr("30%")
+//                            color: "#FFF"
+//                            font {
+//                                pixelSize: 34
+//                            }
+//                        }
+//                    }
+//                    onClicked: {
+//                        //the adjust line change its position
+//                        switch(_speedCounter)
+//                        {
+//                            case 0:
+//                            {
+//                                _speedText.text=qsTr("60%")
+//                                _speedCounter++
+//                                 _activeVehicle.speedAmount = 60
+//                                break;
+//                            }
+//                            case 1:
+//                            {
+//                                _speedText.text=qsTr("100%")
+//                                _speedCounter++
+//                                _activeVehicle.speedAmount = 100
+//                                break;
+//                            }
+//                            case 2:
+//                            {
+//                                _speedText.text=qsTr("30%")
+//                                _speedCounter=0
+//                                _activeVehicle.speedAmount = 30
+//                                break;
+//                            }
+//                            default:
+//                                _speedText.text=qsTr("30%")
+//                                break;
+//                        }
+
+//                    }
+//                }
 
         MouseArea {
             id:                     _throwButtonArea
@@ -369,91 +373,84 @@ QGCView {
             }
         }
 
-        MouseArea {
-            id:                     _rotatingButtonArea
-            width:                  _rotatingButton.width
-            height:                 _rotatingButton.height
-            anchors.right:           parent.right
-            anchors.rightMargin:     ScreenTools.defaultFontPixelHeight * 5
-            anchors.top:            parent.top
-            anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
-            Image {
-                id:     _rotatingButton
-                source: _rotatingIsPressed?"qrc:/qmlimages/resources/btn_roll_press.png":"qrc:/qmlimages/resources/btn_roll_nor.png"
-            }
-            onClicked: {
-                if(_rotatingIsPressed)
-                {
-                    _rotatingIsPressed = false
-                    _activeVehicle.spinDirection = 1
-                }
-                else
-                {
-                     _rotatingIsPressed = true
-                    _activeVehicle.spinDirection = 2
-                }
-            }
-        }
+//                MouseArea {
+//                    id:                     _rotatingButtonArea
+//                    width:                  _rotatingButton.width
+//                    height:                 _rotatingButton.height
+//                    anchors.right:           parent.right
+//                    anchors.rightMargin:     ScreenTools.defaultFontPixelHeight * 5
+//                    anchors.top:            parent.top
+//                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
+//                    Image {
+//                        id:     _rotatingButton
+//                        source: _rotatingIsPressed?"qrc:/res/resources/btn_roll_press.png":"qrc:/res/resources/btn_roll_nor.png"
+//                    }
+//                    onClicked: {
+//                        if(_rotatingIsPressed)
+//                        {
+//                            _rotatingIsPressed = false
+//                            _activeVehicle.spinDirection = 1
+//                        }
+//                        else
+//                        {
+//                             _rotatingIsPressed = true
+//                            _activeVehicle.spinDirection = 2
+//                        }
+//                    }
+//                }
 
-        Rectangle {
-            id:             _batteryIcon
-            width:                  _batteryPicture.width
-            height:                 _batteryPicture.height
-            anchors.right:           parent.right
-            anchors.rightMargin:     ScreenTools.defaultFontPixelHeight * 1
-            anchors.top:            parent.top
-            anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2.5
-            Image {
-                id:     _batteryPicture
-                source: "qrc:/qmlimages/resources/Battery_nor.png"
-                Text {
-                    anchors.centerIn:   _batteryPicture
-                    text:               qsTr("100%")
-                    color:              "white"
-                    font {
-                        pixelSize: 14
+//                Rectangle {
+//                    id:             _batteryIcon
+//                    width:                  _batteryPicture.width
+//                    height:                 _batteryPicture.height
+//                    anchors.right:           parent.right
+//                    anchors.rightMargin:     ScreenTools.defaultFontPixelHeight * 1
+//                    anchors.top:            parent.top
+//                    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2.5
+//                    Button {
+//                        id:     _batteryPicture
+
+////                        source: "qrc:/res/resources/Battery_nor.png"
+//                        onClicked: QGroundControl.multiVehicleManager.showScratch()
+
+//                    }
+//                }
+        //////////////////////top button group//////////////////////////////
+        //////////////////////bottom background//////////////////////////////
+                Rectangle {
+                    id:             _bottomBackground
+                    height:         92
+                    width:          parent.width
+                    color:          "#000"
+                    opacity:        0.35
+                    anchors.left:   parent.left
+                    anchors.bottom: parent.bottom
+                }
+        ////////////////////////bottom background////////////////////////////
+        //////////////////////////bottom Nudge buttons group////////////////////////////
+                    MouseArea {
+                        id:                     __adjustLeftArea
+                        width:                  _adjustLeft.width
+                        height:                 _adjustLeft.height
+                        anchors.left:           parent.left
+                        anchors.leftMargin:     width/15
+                        anchors.bottom:         parent.bottom
+                        anchors.bottomMargin:   2
+                        Image {
+                            id:     _adjustLeft
+                            source: "qrc:/res/resources/btn_AdjustLeft_nor.png"
+                        }
+                        onClicked: {
+                            //the adjust line change its position
+                             _leftAdjustBarPoint.anchors.horizontalCenterOffset -= 2
+                        }
+                        onPressed: {
+                             _adjustLeft.source = "qrc:/res/resources/btn_AdjustLeft_press.png"
+                        }
+                        onReleased: {
+                            _adjustLeft.source = "qrc:/res/resources/btn_AdjustLeft_nor.png"
+                        }
                     }
-                 //when received from the MAV, the remaining battery should be changed accordingly
-
-                }
-            }
-        }
-//////////////////////top button group//////////////////////////////
-//////////////////////bottom background//////////////////////////////
-        Rectangle {
-            id:             _bottomBackground
-            height:         92
-            width:          parent.width
-            color:          "#000"
-            opacity:        0.35
-            anchors.left:   parent.left
-            anchors.bottom: parent.bottom
-        }
-////////////////////////bottom background////////////////////////////
-//////////////////////////bottom Nudge buttons group////////////////////////////
-            MouseArea {
-                id:                     __adjustLeftArea
-                width:                  _adjustLeft.width
-                height:                 _adjustLeft.height
-                anchors.left:           parent.left
-                anchors.leftMargin:     width/15
-                anchors.bottom:         parent.bottom
-                anchors.bottomMargin:   2
-                Image {
-                    id:     _adjustLeft
-                    source: "qrc:/qmlimages/resources/btn_AdjustLeft_nor.png"
-                }
-                onClicked: {
-                    //the adjust line change its position
-                     _leftAdjustBarPoint.anchors.horizontalCenterOffset -= 2
-                }
-                onPressed: {
-                     _adjustLeft.source = "qrc:/qmlimages/resources/btn_AdjustLeft_press.png"
-                }
-                onReleased: {
-                    _adjustLeft.source = "qrc:/qmlimages/resources/btn_AdjustLeft_nor.png"
-                }
-            }
 
             Image{
                 id:             _leftAdjustBar

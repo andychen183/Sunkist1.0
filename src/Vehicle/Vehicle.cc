@@ -1320,7 +1320,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     if ( !_joystickEnabled ) {
-        qWarning()<<"roll="<<roll<<"--pitch="<<pitch<<"--yaw="<<yaw<<"---thrust="<<thrust;
+//        qWarning()<<"roll="<<roll<<"--pitch="<<pitch<<"--yaw="<<yaw<<"---thrust="<<thrust;
         _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
         //QCoreApplication::quit(); test if it's here //mf
     }

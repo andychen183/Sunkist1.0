@@ -80,6 +80,7 @@ QT += \
     svg \
     widgets \
     xml \
+    webkitwidgets \
 
 !MobileBuild {
 QT += \

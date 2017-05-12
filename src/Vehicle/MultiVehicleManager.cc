@@ -66,6 +66,92 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app)
     if (_gcsHeartbeatEnabled) {
         _gcsHeartbeatTimer.start();
     }
+
+        //scratch program
+        /* 载入html网页 */
+        m_pWebView = new QWebView();
+        m_pWebView->load(QUrl("qrc:/json/QtInvokeJS/assets/index.html"));
+//        m_pWebView->show();
+
+        /* 开启JavaScript支持 */
+        QWebSettings *pWebSettings = m_pWebView->page()->settings();
+        pWebSettings->setAttribute(QWebSettings::JavascriptEnabled,true);
+    //    _centralLayout->addWidget(m_pWebView);
+
+        /* 建立信号与槽, 每次载入html时发送段信号 */
+        connect(m_pWebView->page()->mainFrame(),SIGNAL(javaScriptWindowObjectCleared()),
+                this,SLOT(addObjectToJs()));
+        //scratch program
+}
+
+void MultiVehicleManager::showScratch()
+{
+    m_pWebView->show();
+}
+
+//void MultiVehicleManager::jsInvokeQt(int action, int args)
+void MultiVehicleManager::jsInvokeQt(int action, int param)
+{
+    qDebug()<<"MainWindow::jsInvokeQt( action = " <<action<<"param = "<<param<<"),\t JavaScript invoke Qt program!";
+
+//    JsCommandQueueEntry_t entry;
+
+//    entry.uavAction = action;
+//    entry.actionPara = args;
+
+//    _jsCommandQueue.append(entry);
+
+
+//    if(!_jsCommandQueue.size()) {
+//        qWarning() << "Command resend with no commands in queue";
+//        _mavCommandAckTimer.stop();
+//        return;
+//    }
+
+//    JsCommandQueueEntry_t& queuedCommand = _jsCommandQueue[0];
+
+//    if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
+//        emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
+//        if (queuedCommand.showError) {
+//            qgcApp()->showMessage(tr("Vehicle did not respond to command: %1").arg(qgcApp()->toolbox()->missionCommandTree()->friendlyName(queuedCommand.command)));
+//        }
+//        _jsCommandQueue.removeFirst();
+//        _sendNextQueuedMavCommand();
+//        return;
+//    }
+
+    switch (action) {
+    case 1://take off
+//        _activeVehicle->takeoffOrLanddown();
+//        while(true){
+//            if(getUAVstatus()) break;
+//            sleep(3000);
+        qDebug()<<"MainWindow::jsInvokeQt( action = " <<action<<"param = "<<param<<"),\t JavaScript invoke Qt program!";
+
+//        }
+        break;
+    case 2://land down
+//        _activeVehicle->takeoffOrLanddown();
+        break;
+    case 3://turn over
+
+        break;
+    case 4://led
+        _activeVehicle->settLedColor(param);
+        break;
+    case 5://buzzer
+
+        break;
+    default:
+        _activeVehicle->settLedColor(param);
+        break;
+    }
+}
+
+/* 将MainWindows这个类的名称&&对象指针发送给JavaScript */
+void MultiVehicleManager::addObjectToJs()
+{
+    m_pWebView->page()->mainFrame()->addToJavaScriptWindowObject("MainWindow",this);
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)

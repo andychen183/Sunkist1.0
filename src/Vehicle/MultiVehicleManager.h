@@ -27,6 +27,9 @@
 #ifndef MultiVehicleManager_H
 #define MultiVehicleManager_H
 
+#include <QWebView>
+#include <QWebFrame>
+
 #include "Vehicle.h"
 #include "QGCMAVLink.h"
 #include "QmlObjectListModel.h"
@@ -60,6 +63,8 @@ public:
     // Methods
 
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
+
+    Q_INVOKABLE void showScratch();
 
     UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
 
@@ -121,6 +126,27 @@ private:
     bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission
     static const int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
     static const char*  _gcsHeartbeatEnabledKey;
+
+    QWebView                 *m_pWebView;
+
+    typedef struct {
+        int    uavAction;
+        int    actionPara;
+    } JsCommandQueueEntry_t;
+
+    QList<JsCommandQueueEntry_t>   _jsCommandQueue;
+
+    const int TAKEOFF   = 1;
+    const int LANDDOWN  = 2;
+    const int TURNOVER  = 3;
+    const int LEDCHANGE = 4;
+    const int BUZZER    = 5;
+
+public slots:
+
+    void jsInvokeQt(int action, int param);
+
+    void addObjectToJs();
 };
 
 #endif
